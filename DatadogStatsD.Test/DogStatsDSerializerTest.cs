@@ -8,6 +8,7 @@ namespace DatadogStatsD.Test
     internal class DogStatsDSerializerTest
     {
         [TestCase("foo", 1.0, MetricType.Count, null, null, "foo:1|c")]
+        [TestCase("foo", -1.0, MetricType.Count, null, null, "foo:-1|c")]
         [TestCase("foo", 1.0, MetricType.Count, 1.0, null, "foo:1|c")]
         [TestCase("foo", 1.0, MetricType.Count, 0.100000, null, "foo:1|c|@0.100000")]
         [TestCase("foo", 1.0, MetricType.Count, 0.010000, null, "foo:1|c|@0.010000")]
@@ -26,7 +27,7 @@ namespace DatadogStatsD.Test
         [TestCase("foo", 0.123400, MetricType.Histogram, null, null, "foo:0.123400|h")]
         [TestCase("foo", 0.123450, MetricType.Histogram, null, null, "foo:0.123450|h")]
         [TestCase("foo", 0.123456, MetricType.Histogram, null, null, "foo:0.123456|h")]
-        [TestCase("foo.bar_lol", 123456.789012, MetricType.Gauge, 0.123456, "a:b,cdef,fg:hij", "foo.bar_lol:123456.789012|g|@0.123456|#a:b,cdef,fg:hij")]
+        [TestCase("foo.bar_lol", -123456.789012, MetricType.Gauge, 0.123456, "a:b,cdef,fg:hij", "foo.bar_lol:-123456.789012|g|@0.123456|#a:b,cdef,fg:hij")]
         public void SerializeMetric(string name, double value, MetricType type, double? sampleRate, string tags,
             string expected)
         {
