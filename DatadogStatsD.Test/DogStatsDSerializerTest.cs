@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Text;
+using DatadogStatsD.Metrics;
 using NUnit.Framework;
 
 namespace DatadogStatsD.Test

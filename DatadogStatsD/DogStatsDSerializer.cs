@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using DatadogStatsD.Metrics;
 
 namespace DatadogStatsD
 {
@@ -171,7 +172,7 @@ namespace DatadogStatsD
                 throw new ArgumentException("Tag should start with a letter");
             }
 
-            if (tag[tag.Length - 1] == ':')
+            if (tag[^1] == ':')
             {
                 throw new ArgumentException("Tag cannot end with a colon");
             }

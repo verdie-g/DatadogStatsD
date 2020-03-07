@@ -1,4 +1,4 @@
-namespace DatadogStatsD
+namespace DatadogStatsD.Metrics
 {
     /// <summary>
     /// DogStatsD submission types.
