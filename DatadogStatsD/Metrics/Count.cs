@@ -8,7 +8,7 @@ namespace DatadogStatsD.Metrics
     /// track the total number of connections made to a database or the total number of requests to an endpoint. This
     /// number of events can accumulate or decrease over time — it is not monotonically increasing.
     /// </summary>
-    /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types?tab=count</remarks>
+    /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types?tab=count#metric-types</remarks>
     public class Count : Metric
     {
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Count);

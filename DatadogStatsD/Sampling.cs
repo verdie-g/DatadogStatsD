@@ -4,6 +4,7 @@ using System.Threading;
 
 namespace DatadogStatsD
 {
+    /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/dogstatsd_metrics_submission?tab=net#sample-rates</remarks>
     internal static class Sampling
     {
         // https://devblogs.microsoft.com/pfxteam/getting-random-numbers-in-a-thread-safe-way/

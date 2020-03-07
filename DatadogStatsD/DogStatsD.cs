@@ -5,6 +5,9 @@ using DatadogStatsD.Transport;
 
 namespace DatadogStatsD
 {
+    /// <summary>
+    /// DogStatsD client.
+    /// </summary>
     public class DogStatsD : IDisposable
     {
         private readonly DogStatsDConfiguration _conf;
@@ -19,6 +22,15 @@ namespace DatadogStatsD
         public Count CreateCount(string metricName, double sampleRate = 1.0, IList<string> tags = null)
         {
             return new Count(
+                _transport,
+                PrependNamespace(metricName),
+                sampleRate,
+                PrependConstantTags(tags));
+        }
+
+        public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<string> tags = null)
+        {
+            return new Histogram(
                 _transport,
                 PrependNamespace(metricName),
                 sampleRate,
