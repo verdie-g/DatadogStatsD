@@ -54,7 +54,6 @@ namespace DatadogStatsD.Transport
             {
                 if (sendBufferSize + buffer.Count > SafeUdpPayloadSize)
                 {
-                    var s = Encoding.ASCII.GetString(_sendBuffer, 0, sendBufferSize);
                     // send sendBufferSize - 1 to remove the extra new line
                     _socket.Send(new ArraySegment<byte>(_sendBuffer, 0, sendBufferSize - 1), SocketFlags.None);
                     sendBufferSize = 0;
