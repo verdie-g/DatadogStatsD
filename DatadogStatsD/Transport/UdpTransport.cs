@@ -15,13 +15,11 @@ namespace DatadogStatsD.Transport
         private const int SafeUdpPayloadWithNewLineSize = 509;
 
         private readonly Socket _socket;
-        private readonly byte[] _sendBuffer;
         private readonly BlockingCollection<ArraySegment<byte>> _buffers;
 
         public UdpTransport(string host, int port)
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            _sendBuffer =  new byte[SafeUdpPayloadWithNewLineSize];
             _buffers = new BlockingCollection<ArraySegment<byte>>(new ConcurrentQueue<ArraySegment<byte>>());
 
             var ipAddress = Dns.GetHostEntry(host).AddressList.First(a => a.AddressFamily == AddressFamily.InterNetwork);
@@ -48,22 +46,23 @@ namespace DatadogStatsD.Transport
         // internal for testing
         internal void SendBuffers()
         {
+            var sendBuffer =  new byte[SafeUdpPayloadWithNewLineSize];
             int sendBufferSize = 0;
             foreach (var buffer in _buffers.GetConsumingEnumerable())
             {
                 if (sendBufferSize + buffer.Count > SafeUdpPayloadSize)
                 {
                     // send sendBufferSize - 1 to remove the extra new line
-                    _socket.Send(new ArraySegment<byte>(_sendBuffer, 0, sendBufferSize - 1), SocketFlags.None);
+                    _socket.Send(new ArraySegment<byte>(sendBuffer, 0, sendBufferSize - 1), SocketFlags.None);
                     sendBufferSize = 0;
                 }
 
-                Array.Copy(buffer.Array, 0, _sendBuffer, sendBufferSize, buffer.Count);
+                Array.Copy(buffer.Array, 0, sendBuffer, sendBufferSize, buffer.Count);
                 sendBufferSize += buffer.Count;
 
                 if (sendBufferSize + 1 <= SafeUdpPayloadWithNewLineSize)
                 {
-                    _sendBuffer[sendBufferSize] = (byte)'\n';
+                    sendBuffer[sendBufferSize] = (byte)'\n';
                     sendBufferSize += 1;
                 }
 
