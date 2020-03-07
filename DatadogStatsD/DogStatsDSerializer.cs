@@ -65,12 +65,10 @@ namespace DatadogStatsD
                 metricBytes[index + 1] = (byte)'#';
                 index += 2;
 
-            var t = Encoding.ASCII.GetString(tags);
                 Array.Copy(tags, 0, metricBytes, index, tags.Length);
                 index += tags.Length;
             }
 
-            var s = Encoding.ASCII.GetString(metricBytes);
             // wrap array in a segment because ArrayPool can return a larger array than "size"
             return new ArraySegment<byte>(metricBytes, 0, size);
         }
@@ -195,8 +193,20 @@ namespace DatadogStatsD
         private static int SerializeValue(double value, byte[] bytes, int byteIndex)
         {
             bool isValueWhole = value % 1 == 0;
-            string valueStr = isValueWhole ? ((long) value).ToString() : $"{value:0.000000}";
-            return Encoding.ASCII.GetBytes(valueStr, 0, valueStr.Length, bytes, byteIndex);
+            Span<char> valueChars = stackalloc char[20 + 1 + DecimalPrecision];
+            int valueCharsSize;
+            if (isValueWhole)
+            {
+                ((long)value).TryFormat(valueChars, out valueCharsSize);
+            }
+            else
+            {
+                value.TryFormat(valueChars, out valueCharsSize, "0.000000");
+            }
+
+            valueChars = valueChars.Slice(0, valueCharsSize);
+            var bytesSpan = new Span<byte>(bytes, byteIndex, bytes.Length - byteIndex);
+            return Encoding.ASCII.GetBytes(valueChars, bytesSpan);
         }
 
         private static int SerializedMetricSize(byte[] metricName, double value, byte[] type, byte[] sampleRate, byte[] tags)
