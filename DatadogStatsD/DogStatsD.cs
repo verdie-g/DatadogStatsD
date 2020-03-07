@@ -10,13 +10,22 @@ namespace DatadogStatsD
     /// </summary>
     public class DogStatsD : IDisposable
     {
+        private static readonly DogStatsDConfiguration DefaultConfiguration = new DogStatsDConfiguration();
+
         private readonly DogStatsDConfiguration _conf;
         private readonly ITransport _transport;
+
+        public DogStatsD() : this(DefaultConfiguration)
+        {
+
+        }
 
         public DogStatsD(DogStatsDConfiguration conf)
         {
             _conf = conf;
-            _transport = new UdpTransport(_conf.Host, _conf.Port);
+            _transport = new UdpTransport(
+                _conf.Host ?? DefaultConfiguration.Host,
+                _conf.Port ?? DefaultConfiguration.Port.Value);
         }
 
         public Count CreateCount(string metricName, double sampleRate = 1.0, IList<string> tags = null)

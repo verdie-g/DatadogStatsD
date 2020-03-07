@@ -6,14 +6,14 @@ namespace DatadogStatsD
     public class DogStatsDConfiguration
     {
         /// <summary>
-        /// The host of your DogStatsD server.
+        /// The host of your DogStatsD server. Defaults to "localhost".
         /// </summary>
-        public string Host { get; set; }
+        public string Host { get; set; } = "localhost";
 
         /// <summary>
-        /// The port of your DogStatsD server.
+        /// The port of your DogStatsD server. Defaults to 8125.
         /// </summary>
-        public int Port { get; set; }
+        public int? Port { get; set; } = 8125;
 
         /// <summary>
         /// Tags to apply to all metrics, events, and service checks.

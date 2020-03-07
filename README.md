@@ -4,11 +4,7 @@ High Performance [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) Cl
 # Examples
 
 ```csharp
-var dogStatsD = new DogStatsD(new DogStatsDConfiguration
-{
-    Host = "localhost",
-    Port = Endpoint.8125,
-});
+using var dogStatsD = new DogStatsD();
 
 var exampleMetric = dogStatsD.CreateCount("example_metric", 1.0, new[] { "environment:dev" });
 exampleMetric.Increment();
