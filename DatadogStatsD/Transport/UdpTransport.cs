@@ -33,13 +33,12 @@ namespace DatadogStatsD.Transport
             _socket.Send(Array.Empty<byte>()); // the second throws if there was an error
             // passing this test doesn't mean a socket is listening https://serverfault.com/a/416269
 
-            Task.Run(SendBuffers);
+            Task.Factory.StartNew(SendBuffers, TaskCreationOptions.LongRunning);
         }
 
         public void Send(ArraySegment<byte> buffer)
         {
-            // _buffers.Add(buffer);
-            ArrayPool<byte>.Shared.Return(buffer.Array);
+            _buffers.Add(buffer);
         }
 
         public void Dispose()
@@ -48,7 +47,7 @@ namespace DatadogStatsD.Transport
         }
 
         // internal for testing
-        internal async Task SendBuffers()
+        internal void SendBuffers()
         {
             int sendBufferSize = 0;
             foreach (var buffer in _buffers.GetConsumingEnumerable())
@@ -57,7 +56,7 @@ namespace DatadogStatsD.Transport
                 {
                     var s = Encoding.ASCII.GetString(_sendBuffer, 0, sendBufferSize);
                     // send sendBufferSize - 1 to remove the extra new line
-                    await _socket.SendAsync(new ArraySegment<byte>(_sendBuffer, 0, sendBufferSize - 1), SocketFlags.None);
+                    _socket.Send(new ArraySegment<byte>(_sendBuffer, 0, sendBufferSize - 1), SocketFlags.None);
                     sendBufferSize = 0;
                 }
 
