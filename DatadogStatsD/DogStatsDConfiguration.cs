@@ -18,11 +18,11 @@ namespace DatadogStatsD
         /// <summary>
         /// Tags to apply to all metrics, events, and service checks.
         /// </summary>
-        public IList<string> ConstantTags { get; set; }
+        public IList<string>? ConstantTags { get; set; }
 
         /// <summary>
         /// Namespace to prefix all metrics, events, and service checks.
         /// </summary>
-        public string Namespace { get; set; }
+        public string? Namespace { get; set; }
     }
 }

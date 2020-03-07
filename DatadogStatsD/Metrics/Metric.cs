@@ -8,10 +8,10 @@ namespace DatadogStatsD.Metrics
         private readonly ITransport _transport;
         private readonly byte[] _metricNameBytes;
         private readonly double _sampleRate;
-        private readonly byte[] _sampleRateBytes;
+        private readonly byte[]? _sampleRateBytes;
         private readonly byte[] _tagsBytes;
 
-        protected Metric(ITransport transport, string metricName, double sampleRate, IList<string> tags, bool includeSampleRate)
+        protected Metric(ITransport transport, string metricName, double sampleRate, IList<string>? tags, bool includeSampleRate)
         {
             _transport = transport;
             _metricNameBytes = DogStatsDSerializer.SerializeMetricName(metricName);

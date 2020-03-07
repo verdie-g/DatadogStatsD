@@ -25,10 +25,10 @@ namespace DatadogStatsD
             _conf = conf;
             _transport = new UdpTransport(
                 _conf.Host ?? DefaultConfiguration.Host,
-                _conf.Port ?? DefaultConfiguration.Port.Value);
+                _conf.Port ?? DefaultConfiguration.Port!.Value);
         }
 
-        public Count CreateCount(string metricName, double sampleRate = 1.0, IList<string> tags = null)
+        public Count CreateCount(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
             return new Count(
                 _transport,
@@ -37,7 +37,7 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
-        public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<string> tags = null)
+        public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
             return new Histogram(
                 _transport,
@@ -58,7 +58,7 @@ namespace DatadogStatsD
                 : _conf.Namespace + "." + metricName;
         }
 
-        private IList<string> PrependConstantTags(IList<string> tags)
+        private IList<string>? PrependConstantTags(IList<string>? tags)
         {
             if (_conf.ConstantTags == null || _conf.ConstantTags.Count == 0)
             {

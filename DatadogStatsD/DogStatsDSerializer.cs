@@ -25,7 +25,7 @@ namespace DatadogStatsD
         /// <returns>A segment of a byte array containing the serialized metric. The array was loaned from
         /// <see cref="ArrayPool{T}.Shared"/> and must be returned once it's not used.</returns>
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell?tab=metrics</remarks>
-        public static ArraySegment<byte> SerializeMetric(byte[] metricName, double value, byte[] type, byte[] sampleRate, byte[] tags)
+        public static ArraySegment<byte> SerializeMetric(byte[] metricName, double value, byte[] type, byte[]? sampleRate, byte[] tags)
         {
             int size = SerializedMetricSize(metricName, value, type, sampleRate, tags);
             byte[] metricBytes = ArrayPool<byte>.Shared.Rent(size);
@@ -129,7 +129,7 @@ namespace DatadogStatsD
             return Encoding.ASCII.GetBytes($"{sampleRate:0.000000}");
         }
 
-        public static byte[] SerializeTags(IList<string> tags)
+        public static byte[] SerializeTags(IList<string>? tags)
         {
             if (tags == null || tags.Count == 0)
             {
@@ -210,7 +210,7 @@ namespace DatadogStatsD
             return Encoding.ASCII.GetBytes(valueChars, bytesSpan);
         }
 
-        private static int SerializedMetricSize(byte[] metricName, double value, byte[] type, byte[] sampleRate, byte[] tags)
+        private static int SerializedMetricSize(byte[] metricName, double value, byte[] type, byte[]? sampleRate, byte[] tags)
         {
             int size = metricName.Length + 1 + SerializedValueSize(value) + 1 + type.Length; // ':' + '|'
 
