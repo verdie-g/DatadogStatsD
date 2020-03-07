@@ -21,17 +21,17 @@ Benchmark comparing performance of this library with [neuecc/DatadogSharp](https
 and [DataDog/dogstatsd-csharp-client](https://github.com/DataDog/dogstatsd-csharp-client).
 
 ```
-|        Method |     Op |       Mean |     Error |    StdDev |      Median |      Gen 0 | Gen 1 | Gen 2 |   Allocated |
-|-------------- |------- |-----------:|----------:|----------:|------------:|-----------:|------:|------:|------------:|
-| DatadogStatsD |   1000 |   1.005 ms | 0.0206 ms | 0.0578 ms |   0.9816 ms |    82.0313 |     - |     - |   126.41 KB |
-|  DatadogSharp |   1000 |   2.803 ms | 0.0196 ms | 0.0183 ms |   2.7963 ms |   355.4688 |     - |     - |   545.78 KB |
-|  StatsDClient |   1000 |   3.564 ms | 0.0265 ms | 0.0248 ms |   3.5581 ms |   578.1250 |     - |     - |   890.63 KB |
-| DatadogStatsD |  10000 |   9.387 ms | 0.1623 ms | 0.1439 ms |   9.3740 ms |   828.1250 |     - |     - |  1282.08 KB |
-|  DatadogSharp |  10000 |  28.837 ms | 0.3450 ms | 0.3227 ms |  28.8204 ms |  3562.5000 |     - |     - |  5467.66 KB |
-|  StatsDClient |  10000 |  36.194 ms | 0.2229 ms | 0.2085 ms |  36.1422 ms |  5857.1429 |     - |     - |  8976.56 KB |
-| DatadogStatsD | 100000 |  91.979 ms | 1.8285 ms | 1.7103 ms |  92.8387 ms |  8400.0000 |     - |     - | 13043.32 KB |
-|  DatadogSharp | 100000 | 281.143 ms | 1.2151 ms | 1.0772 ms | 280.9410 ms | 35500.0000 |     - |     - | 54686.41 KB |
-|  StatsDClient | 100000 | 365.255 ms | 3.2131 ms | 3.0055 ms | 364.8525 ms | 58000.0000 |     - |     - | 89835.94 KB |
+|        Method |     Op |         Mean |       Error |      StdDev |      Gen 0 | Gen 1 | Gen 2 |   Allocated |
+|-------------- |------- |-------------:|------------:|------------:|-----------:|------:|------:|------------:|
+| DatadogStatsD |   1000 |     947.4 us |    17.25 us |    14.41 us |    82.0313 |     - |     - |   126.19 KB |
+|  DatadogSharp |   1000 |   2,877.0 us |    19.73 us |    18.46 us |   355.4688 |     - |     - |   545.79 KB |
+|  StatsDClient |   1000 |   4,114.0 us |    54.89 us |    51.35 us |   578.1250 |     - |     - |   890.63 KB |
+| DatadogStatsD |  10000 |   9,317.6 us |    56.12 us |    49.75 us |   828.1250 |     - |     - |   1281.8 KB |
+|  DatadogSharp |  10000 |  29,524.1 us |   167.88 us |   148.82 us |  3562.5000 |     - |     - |  5467.66 KB |
+|  StatsDClient |  10000 |  39,811.0 us |   656.84 us |   548.49 us |  5846.1538 |     - |     - |  8976.56 KB |
+| DatadogStatsD | 100000 |  95,300.2 us | 1,963.51 us | 2,182.43 us |  8500.0000 |     - |     - | 13073.19 KB |
+|  DatadogSharp | 100000 | 306,468.1 us | 1,771.37 us | 1,570.28 us | 35000.0000 |     - |     - | 54686.41 KB |
+|  StatsDClient | 100000 | 362,094.1 us | 2,985.94 us | 2,793.05 us | 58000.0000 |     - |     - | 89835.94 KB |
 ```
 
 Benchmark source can be found in
