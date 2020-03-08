@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.Transport;
 
@@ -70,9 +71,7 @@ namespace DatadogStatsD
                 return _conf.ConstantTags;
             }
 
-            var allTags = new List<string>(_conf.ConstantTags);
-            allTags.AddRange(tags);
-            return allTags;
+            return _conf.ConstantTags.Concat(tags).ToList();
         }
     }
 }
