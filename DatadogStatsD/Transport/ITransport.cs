@@ -2,8 +2,8 @@ using System;
 
 namespace DatadogStatsD.Transport
 {
-    public interface ITransport : IDisposable
+    internal interface ITransport : IDisposable
     {
-        public void Send(ArraySegment<byte> buffer);
+        void Send(ArraySegment<byte> buffer);
     }
 }
