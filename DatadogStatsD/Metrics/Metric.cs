@@ -11,7 +11,7 @@ namespace DatadogStatsD.Metrics
         private readonly byte[]? _sampleRateBytes;
         private readonly byte[] _tagsBytes;
 
-        protected Metric(ITransport transport, string metricName, double sampleRate, IList<string>? tags, bool includeSampleRate)
+        internal Metric(ITransport transport, string metricName, double sampleRate, IList<string>? tags, bool includeSampleRate)
         {
             _transport = transport;
             _metricNameBytes = DogStatsDSerializer.SerializeMetricName(metricName);

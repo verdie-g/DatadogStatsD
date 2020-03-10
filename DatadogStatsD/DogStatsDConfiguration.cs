@@ -16,6 +16,11 @@ namespace DatadogStatsD
         public int? Port { get; set; } = 8125;
 
         /// <summary>
+        /// The path to the DogStatsD Unix domain socket (overrides <see cref="Host"/> and <see cref="Port"/>).
+        /// </summary>
+        public string? UnixSocketPath { get; set; }
+
+        /// <summary>
         /// Tags to apply to all metrics, events, and service checks.
         /// </summary>
         public IList<string>? ConstantTags { get; set; }

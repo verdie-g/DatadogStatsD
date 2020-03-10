@@ -11,6 +11,10 @@ namespace DatadogStatsD
     /// </summary>
     public class DogStatsD : IDisposable
     {
+        private const int UdpPayloadSize = 1432;
+        private const int UdsPayloadSize = 8192;
+        private const int MaxQueueSize = 1024;
+        private static readonly TimeSpan MaxBufferingTime = TimeSpan.FromSeconds(2);
         private static readonly DogStatsDConfiguration DefaultConfiguration = new DogStatsDConfiguration();
 
         private readonly DogStatsDConfiguration _conf;
@@ -18,15 +22,28 @@ namespace DatadogStatsD
 
         public DogStatsD() : this(DefaultConfiguration)
         {
-
         }
 
         public DogStatsD(DogStatsDConfiguration conf)
         {
             _conf = conf;
-            _transport = new UdpTransport(
-                _conf.Host ?? DefaultConfiguration.Host,
-                _conf.Port ?? DefaultConfiguration.Port!.Value);
+
+            ISocket socket;
+            int maxBufferingSize;
+            if (conf.UnixSocketPath == null)
+            {
+                socket = new UdpSocket(
+                    _conf.Host ?? DefaultConfiguration.Host,
+                    _conf.Port ?? DefaultConfiguration.Port!.Value);
+                maxBufferingSize = UdpPayloadSize;
+            }
+            else
+            {
+                socket = new UdsSocket(_conf.UnixSocketPath!);
+                maxBufferingSize = UdsPayloadSize;
+            }
+
+            _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
         }
 
         public Count CreateCount(string metricName, double sampleRate = 1.0, IList<string>? tags = null)

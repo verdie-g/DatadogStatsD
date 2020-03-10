@@ -1,31 +1,36 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace DatadogStatsD.Transport
 {
     internal class UdpSocket : ISocket
     {
-        private readonly Socket _socket;
+        private readonly Socket _underlyingSocket;
 
-        public UdpSocket()
+        public UdpSocket(string host, int port)
         {
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            var address = Dns.GetHostEntry(host).AddressList.First(a => a.AddressFamily == AddressFamily.InterNetwork);
+            var endpoint = new IPEndPoint(address, port);
+
+            _underlyingSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _underlyingSocket.Connect(endpoint);
+
+            _underlyingSocket.Send(new ArraySegment<byte>(Array.Empty<byte>())); // the first one get the potential ICMP error
+            _underlyingSocket.Send(new ArraySegment<byte>(Array.Empty<byte>())); // the second throws if there was an error
+            // passing this test doesn't mean a socket is listening https://serverfault.com/a/416269
         }
 
-        public void Connect(IPAddress ipAddress, int port)
+        public void Send(ArraySegment<byte> buffer)
         {
-            _socket.Connect(ipAddress, port);
-        }
-
-        public int Send(ArraySegment<byte> buffer, SocketFlags flags)
-        {
-            return _socket.Send(buffer, flags);
+            _underlyingSocket.Send(buffer);
         }
 
         public void Dispose()
         {
-            _socket.Dispose();
+            _underlyingSocket.Dispose();
         }
     }
 }
