@@ -7,9 +7,10 @@ namespace DatadogStatsD.Metrics
     internal enum MetricType
     {
         Count,
-        Rate,
+        Distribution,
         Gauge,
         Histogram,
-        Distribution,
+        Rate,
+        Timer,
     }
 }

@@ -9,6 +9,7 @@ namespace DatadogStatsD.Test
     internal class DogStatsDSerializerTest
     {
         [TestCase("foo", 1.0, MetricType.Count, null, null, "foo:1|c")]
+        [TestCase("foo", 1.0, MetricType.Timer, null, null, "foo:1|ms")]
         [TestCase("foo", -1.0, MetricType.Count, null, null, "foo:-1|c")]
         [TestCase("foo", 1.0, MetricType.Count, 1.0, null, "foo:1|c")]
         [TestCase("foo", 1.0, MetricType.Count, 0.100000, null, "foo:1|c|@0.100000")]
