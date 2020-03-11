@@ -4,7 +4,7 @@ using DatadogStatsD.Transport;
 namespace DatadogStatsD.Metrics
 {
     /// <summary>
-    /// The HISTOGRAM metric represents the statistical distribution of a set of values calculated in one time interval.
+    /// <see cref="Histogram"/> tracks the statistical distribution of a set of values on each host.
     /// </summary>
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types/?tab=histogram#metric-types</remarks>
     public class Histogram : Metric

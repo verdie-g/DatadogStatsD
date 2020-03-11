@@ -11,6 +11,7 @@ namespace DatadogStatsD
     /// </summary>
     public class DogStatsD : IDisposable
     {
+        // https://github.com/statsd/statsd/blob/master/docs/metric_types.md#multi-metric-packets
         private const int UdpPayloadSize = 1432;
         private const int UdsPayloadSize = 8192;
         private const int MaxQueueSize = 1024;

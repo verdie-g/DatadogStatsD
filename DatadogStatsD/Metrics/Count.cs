@@ -4,9 +4,7 @@ using DatadogStatsD.Transport;
 namespace DatadogStatsD.Metrics
 {
     /// <summary>
-    /// The COUNT metric represents the total number of event occurrences in one time interval. A COUNT can be used to
-    /// track the total number of connections made to a database or the total number of requests to an endpoint. This
-    /// number of events can accumulate or decrease over time — it is not monotonically increasing.
+    /// <see cref="Count"/> tracks how many times something happened per second.
     /// </summary>
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types?tab=count#metric-types</remarks>
     public class Count : Metric

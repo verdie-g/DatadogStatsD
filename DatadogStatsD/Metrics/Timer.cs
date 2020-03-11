@@ -4,6 +4,9 @@ using DatadogStatsD.Transport;
 
 namespace DatadogStatsD.Metrics
 {
+    /// <summary>
+    /// <see cref="Timer"/> sends timing information.
+    /// </summary>
     public class Timer : Metric
     {
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Timer);
@@ -13,14 +16,22 @@ namespace DatadogStatsD.Metrics
         {
         }
 
+        /// <summary>
+        /// Sends <paramref name="stopwatch"/>.ElapsedMilliseconds.
+        /// </summary>
+        /// <param name="stopwatch"></param>
         public void Record(Stopwatch stopwatch)
         {
             Record(stopwatch.ElapsedMilliseconds);
         }
 
-        public void Record(long value)
+        /// <summary>
+        /// Sends a milliseconds timing.
+        /// </summary>
+        /// <param name="timingMs"></param>
+        public void Record(long timingMs)
         {
-            Send(value, TypeBytes);
+            Send(timingMs, TypeBytes);
         }
     }
 }
