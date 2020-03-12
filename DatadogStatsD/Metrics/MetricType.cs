@@ -10,7 +10,6 @@ namespace DatadogStatsD.Metrics
         Distribution,
         Gauge,
         Histogram,
-        Rate,
         Timer,
     }
 }
