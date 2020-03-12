@@ -15,11 +15,14 @@ namespace DatadogStatsD
         private const int UdpPayloadSize = 1432;
         private const int UdsPayloadSize = 8192;
         private const int MaxQueueSize = 1024;
+        private const string UdpName = "udp";
+        private const string UdsName = "uds";
         private static readonly TimeSpan MaxBufferingTime = TimeSpan.FromSeconds(2);
         private static readonly DogStatsDConfiguration DefaultConfiguration = new DogStatsDConfiguration();
 
         private readonly DogStatsDConfiguration _conf;
-        private readonly ITransport _transport;
+        private readonly NonBlockingBufferedTransport _transport;
+        private readonly Telemetry _telemetry;
 
         public DogStatsD() : this(DefaultConfiguration)
         {
@@ -31,26 +34,33 @@ namespace DatadogStatsD
 
             ISocket socket;
             int maxBufferingSize;
+            string transportName;
             if (conf.UnixSocketPath == null)
             {
                 socket = new UdpSocket(
                     _conf.Host ?? DefaultConfiguration.Host,
                     _conf.Port ?? DefaultConfiguration.Port!.Value);
                 maxBufferingSize = UdpPayloadSize;
+                transportName = UdpName;
             }
             else
             {
                 socket = new UdsSocket(_conf.UnixSocketPath!);
                 maxBufferingSize = UdsPayloadSize;
+                transportName = UdsName;
             }
 
             _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
+            _telemetry = new Telemetry(transportName, _transport);
+            _transport.OnPacketSent += size => _telemetry.PacketSent(size);
+            _transport.OnPacketDropped += (size, queue) => _telemetry.PacketDropped(size, queue);
         }
 
         public Count CreateCount(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
             return new Count(
                 _transport,
+                _telemetry,
                 PrependNamespace(metricName),
                 sampleRate,
                 PrependConstantTags(tags));
@@ -60,6 +70,7 @@ namespace DatadogStatsD
         {
             return new Histogram(
                 _transport,
+                _telemetry,
                 PrependNamespace(metricName),
                 sampleRate,
                 PrependConstantTags(tags));
@@ -69,6 +80,7 @@ namespace DatadogStatsD
         {
             return new Timer(
                 _transport,
+                _telemetry,
                 PrependNamespace(metricName),
                 sampleRate,
                 PrependConstantTags(tags));
@@ -77,6 +89,7 @@ namespace DatadogStatsD
         public void Dispose()
         {
             _transport.Dispose();
+            _telemetry.Dispose();
         }
 
         private string PrependNamespace(string metricName)

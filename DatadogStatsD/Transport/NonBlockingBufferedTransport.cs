@@ -22,10 +22,14 @@ namespace DatadogStatsD.Transport
         // eventually consistent size of _queue
         private int _queueSize;
 
-        public NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime, int maxQueueSize)
+        public NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime,
+            int maxQueueSize)
             : this(socket, maxBufferingSize, maxBufferingTime, maxQueueSize, new CancellationTokenSource())
         {
         }
+
+        public event Action<int> OnPacketSent = size => {};
+        public event Action<int, bool> OnPacketDropped = (size, queue) => {};
 
         // internal for testing
         internal NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime,
@@ -45,6 +49,7 @@ namespace DatadogStatsD.Transport
         {
             if (_queueSize >= _maxQueueSize)
             {
+                OnPacketDropped(buffer.Count, true);
                 ArrayPool<byte>.Shared.Return(buffer.Array);
                 return;
             }
@@ -113,9 +118,11 @@ namespace DatadogStatsD.Transport
             try
             {
                 _socket.Send(buffer);
+                OnPacketSent(buffer.Count);
             }
             catch // an error occured. Try resuming after 1 second
             {
+                OnPacketDropped(buffer.Count, false);
                 Thread.Sleep(1000);
             }
         }

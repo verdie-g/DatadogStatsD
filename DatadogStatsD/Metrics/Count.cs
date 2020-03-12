@@ -11,8 +11,8 @@ namespace DatadogStatsD.Metrics
     {
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Count);
 
-        internal Count(ITransport transport, string metricName, double sampleRate, IList<string>? tags)
-            : base(transport, metricName, sampleRate, tags, true)
+        internal Count(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
+            : base(transport, telemetry, metricName, sampleRate, tags, true)
         {
         }
 
