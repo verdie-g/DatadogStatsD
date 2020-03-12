@@ -64,7 +64,7 @@ namespace DatadogStatsD.Transport
             _socket.Dispose();
         }
 
-        private void SendBuffers()
+        private async Task SendBuffers()
         {
             var bufferingCtx = new BufferingContext(_maxBufferingSize, _maxBufferingTime);
 
@@ -78,7 +78,7 @@ namespace DatadogStatsD.Transport
                 {
                     if (!bufferingCtx.Empty)
                     {
-                        Flush(bufferingCtx);
+                        await Flush(bufferingCtx);
                     }
                     else
                     {
@@ -92,14 +92,14 @@ namespace DatadogStatsD.Transport
 
                 if (buffer.Count > _maxBufferingSize)
                 {
-                    SendBuffer(buffer);
+                    await SendBuffer(buffer);
                     ArrayPool<byte>.Shared.Return(buffer.Array);
                     continue;
                 }
 
                 if (!bufferingCtx.Fits(buffer))
                 {
-                    Flush(bufferingCtx);
+                    await Flush(bufferingCtx);
                 }
 
                 bufferingCtx.Append(buffer);
@@ -107,23 +107,23 @@ namespace DatadogStatsD.Transport
             }
         }
 
-        private void Flush(BufferingContext bufferingCtx)
+        private async Task Flush(BufferingContext bufferingCtx)
         {
-            SendBuffer(bufferingCtx.Segment);
+            await SendBuffer(bufferingCtx.Segment);
             bufferingCtx.Reset();
         }
 
-        private void SendBuffer(ArraySegment<byte> buffer)
+        private async Task SendBuffer(ArraySegment<byte> buffer)
         {
             try
             {
-                _socket.Send(buffer);
+                await _socket.SendAsync(buffer);
                 OnPacketSent(buffer.Count);
             }
             catch // an error occured. Try resuming after 1 second
             {
                 OnPacketDropped(buffer.Count, false);
-                Thread.Sleep(1000);
+                await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
 

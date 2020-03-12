@@ -23,9 +23,9 @@ namespace DatadogStatsD.Transport
             // passing this test doesn't mean a socket is listening https://serverfault.com/a/416269
         }
 
-        public void Send(ArraySegment<byte> buffer)
+        public Task SendAsync(ArraySegment<byte> buffer)
         {
-            _underlyingSocket.Send(buffer);
+            return _underlyingSocket.SendAsync(buffer, SocketFlags.None);
         }
 
         public void Dispose()

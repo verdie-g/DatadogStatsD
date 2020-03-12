@@ -28,15 +28,15 @@ and [DataDog/dogstatsd-csharp-client](https://github.com/DataDog/dogstatsd-cshar
 ```
 |        Method |     Op |       Mean |     Error |    StdDev |      Gen 0 | Gen 1 | Gen 2 |   Allocated |
 |-------------- |------- |-----------:|----------:|----------:|-----------:|------:|------:|------------:|
-| DatadogStatsD |   1000 |   1.040 ms | 0.0201 ms | 0.0215 ms |   103.5156 |     - |     - |   160.88 KB |
-|  DatadogSharp |   1000 |   2.971 ms | 0.0183 ms | 0.0163 ms |   355.4688 |     - |     - |   545.79 KB |
-|  StatsDClient |   1000 |   3.924 ms | 0.0274 ms | 0.0243 ms |   578.1250 |     - |     - |   890.63 KB |
-| DatadogStatsD |  10000 |  10.415 ms | 0.2049 ms | 0.3190 ms |  1312.5000 |     - |     - |  2033.09 KB |
-|  DatadogSharp |  10000 |  28.727 ms | 0.2411 ms | 0.2137 ms |  3562.5000 |     - |     - |  5467.66 KB |
-|  StatsDClient |  10000 |  39.407 ms | 0.2569 ms | 0.2277 ms |  5846.1538 |     - |     - |  8976.58 KB |
-| DatadogStatsD | 100000 | 104.598 ms | 2.0777 ms | 2.6277 ms | 12400.0000 |     - |     - |  19032.2 KB |
-|  DatadogSharp | 100000 | 299.014 ms | 1.6739 ms | 1.4838 ms | 35000.0000 |     - |     - | 54686.41 KB |
-|  StatsDClient | 100000 | 390.388 ms | 5.0534 ms | 4.7270 ms | 58000.0000 |     - |     - | 89835.94 KB |
+| DatadogStatsD |   1000 |   1.028 ms | 0.0205 ms | 0.0236 ms |   117.1875 |     - |     - |    180.9 KB |
+|  DatadogSharp |   1000 |   2.891 ms | 0.0156 ms | 0.0146 ms |   355.4688 |     - |     - |   545.78 KB |
+|  StatsDClient |   1000 |   3.701 ms | 0.0366 ms | 0.0342 ms |   578.1250 |     - |     - |   890.64 KB |
+| DatadogStatsD |  10000 |  10.221 ms | 0.1694 ms | 0.2483 ms |  1140.6250 |     - |     - |  1750.96 KB |
+|  DatadogSharp |  10000 |  31.607 ms | 0.1655 ms | 0.1467 ms |  3562.5000 |     - |     - |  5467.67 KB |
+|  StatsDClient |  10000 |  39.319 ms | 0.3287 ms | 0.3075 ms |  5846.1538 |     - |     - |  8976.56 KB |
+| DatadogStatsD | 100000 | 101.220 ms | 2.2907 ms | 2.0306 ms |  8000.0000 |     - |     - | 12405.45 KB |
+|  DatadogSharp | 100000 | 289.838 ms | 3.1539 ms | 2.9501 ms | 35000.0000 |     - |     - | 54686.41 KB |
+|  StatsDClient | 100000 | 382.944 ms | 3.7201 ms | 3.4798 ms | 58000.0000 |     - |     - | 89835.94 KB |
 ```
 
 Benchmark sources can be found in

@@ -18,9 +18,9 @@ namespace DatadogStatsD.Transport
             _underlyingSocket.Connect(endpoint);
         }
 
-        public void Send(ArraySegment<byte> buffer)
+        public Task SendAsync(ArraySegment<byte> buffer)
         {
-            _underlyingSocket.Send(buffer);
+            return _underlyingSocket.SendAsync(buffer, SocketFlags.None);
         }
 
         public void Dispose()
