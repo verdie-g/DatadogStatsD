@@ -16,7 +16,7 @@ namespace DatadogStatsD.Metrics
         {
         }
 
-        public void Update(long value)
+        public void Update(double value)
         {
             Send(value, TypeBytes);
         }
