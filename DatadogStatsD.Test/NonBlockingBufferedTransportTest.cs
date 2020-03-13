@@ -8,7 +8,7 @@ using NUnit.Framework;
 
 namespace DatadogStatsD.Test
 {
-    public class UdpTransportTest
+    public class NonBlockingBufferedTransportTest
     {
         [Test]
         public async Task MessagesLargerThanMaxBufferingSizeAreSentDirectly()
