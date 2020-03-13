@@ -76,16 +76,6 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
-        public Timer CreateTimer(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
-        {
-            return new Timer(
-                _transport,
-                _telemetry,
-                PrependNamespace(metricName),
-                sampleRate,
-                PrependConstantTags(tags));
-        }
-
         public void Dispose()
         {
             _transport.Dispose();
