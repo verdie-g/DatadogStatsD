@@ -86,6 +86,16 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
+        public Distribution CreateDistribution(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
+        {
+            return new Distribution(
+                _transport,
+                _telemetry,
+                PrependNamespace(metricName),
+                sampleRate,
+                PrependConstantTags(tags));
+        }
+
         public void Dispose()
         {
             _transport.Dispose();

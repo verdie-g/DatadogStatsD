@@ -108,7 +108,7 @@ namespace DatadogStatsD
             string typeStr = type switch
             {
                 MetricType.Count => "c",
-                // MetricType.Distribution => ,
+                MetricType.Distribution => "d",
                 MetricType.Gauge => "g",
                 MetricType.Histogram => "h",
                 _ => throw new ArgumentOutOfRangeException(nameof(type)),
