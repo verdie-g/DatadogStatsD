@@ -76,6 +76,16 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
+        public Gauge CreateGauge(string metricName, Func<double> evaluator, IList<string>? tags = null)
+        {
+            return new Gauge(
+                _transport,
+                _telemetry,
+                PrependNamespace(metricName),
+                evaluator,
+                PrependConstantTags(tags));
+        }
+
         public void Dispose()
         {
             _transport.Dispose();
