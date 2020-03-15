@@ -111,6 +111,7 @@ namespace DatadogStatsD
                 MetricType.Distribution => "d",
                 MetricType.Gauge => "g",
                 MetricType.Histogram => "h",
+                MetricType.Set => "s",
                 _ => throw new ArgumentOutOfRangeException(nameof(type)),
             };
 

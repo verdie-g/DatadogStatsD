@@ -103,6 +103,15 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
+        public Set CreateSet(string metricName, IList<string>? tags = null)
+        {
+            return new Set(
+                _transport,
+                _telemetry,
+                PrependNamespace(metricName),
+                PrependConstantTags(tags));
+        }
+
         public void Dispose()
         {
             _transport.Dispose();
