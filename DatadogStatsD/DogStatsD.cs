@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.Transport;
 
@@ -19,6 +20,9 @@ namespace DatadogStatsD
         private const string UdsName = "uds";
         private static readonly TimeSpan MaxBufferingTime = TimeSpan.FromSeconds(2);
         private static readonly DogStatsDConfiguration DefaultConfiguration = new DogStatsDConfiguration();
+        // https://docs.datadoghq.com/developers/dogstatsd/data_aggregation#how-is-aggregation-performed-with-the-dogstatsd-server
+        private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10);
+        private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
 
         private readonly DogStatsDConfiguration _conf;
         private readonly NonBlockingBufferedTransport _transport;
@@ -51,18 +55,18 @@ namespace DatadogStatsD
             }
 
             _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
-            _telemetry = new Telemetry(transportName, _transport);
+            _telemetry = new Telemetry(transportName, _transport, TickTimer);
             _transport.OnPacketSent += size => _telemetry.PacketSent(size);
             _transport.OnPacketDropped += (size, queue) => _telemetry.PacketDropped(size, queue);
         }
 
-        public Count CreateCount(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
+        public Count CreateCount(string metricName, IList<string>? tags = null)
         {
             return new Count(
                 _transport,
                 _telemetry,
+                TickTimer,
                 PrependNamespace(metricName),
-                sampleRate,
                 PrependConstantTags(tags));
         }
 
@@ -81,6 +85,7 @@ namespace DatadogStatsD
             return new Gauge(
                 _transport,
                 _telemetry,
+                TickTimer,
                 PrependNamespace(metricName),
                 evaluator,
                 PrependConstantTags(tags));

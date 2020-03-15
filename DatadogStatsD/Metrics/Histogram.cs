@@ -9,7 +9,7 @@ namespace DatadogStatsD.Metrics
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types/?tab=histogram#metric-types</remarks>
     public class Histogram : Metric
     {
-        private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Count);
+        private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Histogram);
 
         internal Histogram(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
             : base(transport, telemetry, metricName, sampleRate, tags, true)

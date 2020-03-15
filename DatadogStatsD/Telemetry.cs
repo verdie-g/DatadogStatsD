@@ -1,10 +1,9 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using System.Threading;
+using System.Timers;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.Transport;
-using Timer = System.Threading.Timer;
 
 namespace DatadogStatsD
 {
@@ -26,76 +25,62 @@ namespace DatadogStatsD
         private const string ClientVersionKey = "client_version";
         private const string ClientTransportKey = "client_transport";
 
-        private readonly Count _metricsCount;
-        private readonly Count _eventsCount;
-        private readonly Count _serviceChecksCount;
-        private readonly Count _bytesSentCount;
-        private readonly Count _bytesDroppedCount;
-        private readonly Count _bytesDroppedQueueCount;
-        private readonly Count _bytesDroppedWriterCount;
-        private readonly Count _packetsSentCount;
-        private readonly Count _packetsDroppedCount;
-        private readonly Count _packetsDroppedQueueCount;
-        private readonly Count _packetsDroppedWriterCount;
-
-        private readonly Timer _flushTimer;
-
         /// <summary>
         /// Number of metrics sent (before sampling).
         /// </summary>
-        private int _metrics;
+        private readonly Count _metricsCount;
 
         /// <summary>
         /// Number of events sent.
         /// </summary>
-        private int _events;
+        private readonly Count _eventsCount;
 
         /// <summary>
         /// Number of service_checks sent.
         /// </summary>
-        private int _serviceChecks;
+        private readonly Count _serviceChecksCount;
 
         /// <summary>
         /// Number of bytes successfully sent to the Agent.
         /// </summary>
-        private int _bytesSent;
+        private readonly Count _bytesSentCount;
 
         /// <summary>
         /// Number of bytes dropped.
         /// </summary>
-        private int _bytesDropped;
+        private readonly Count _bytesDroppedCount;
 
         /// <summary>
         /// Number of bytes dropped because the queue was full.
         /// </summary>
-        private int _bytesDroppedQueue;
+        private readonly Count _bytesDroppedQueueCount;
 
         /// <summary>
         /// Number of bytes dropped because of an error while writing.
         /// </summary>
-        private int _bytesDroppedWriter;
+        private readonly Count _bytesDroppedWriterCount;
 
         /// <summary>
         /// Number of datagrams successfully sent.
         /// </summary>
-        private int _packetsSent;
+        private readonly Count _packetsSentCount;
 
         /// <summary>
         /// Number of datagrams dropped.
         /// </summary>
-        private int _packetsDropped;
+        private readonly Count _packetsDroppedCount;
 
         /// <summary>
         /// Number of datagrams dropped because the queue was full.
         /// </summary>
-        private int _packetsDroppedQueue;
+        private readonly Count _packetsDroppedQueueCount;
 
         /// <summary>
         /// Number of datagrams dropped because of an error while writing.
         /// </summary>
-        private int _packetsDroppedWriter;
+        private readonly Count _packetsDroppedWriterCount;
 
-        public Telemetry(string transportName, ITransport transport)
+        public Telemetry(string transportName, ITransport transport, Timer tickTimer)
         {
             var tags = new[]
             {
@@ -104,66 +89,59 @@ namespace DatadogStatsD
                 ClientTransportKey + ":" + transportName,
             };
 
-             _metricsCount = new Count(transport, this, "datadog.dogstatsd.client.metrics", 1.0, tags);
-             _eventsCount = new Count(transport, this, "datadog.dogstatsd.client.events", 1.0, tags);
-             _serviceChecksCount = new Count(transport, this, "datadog.dogstatsd.client.service_checks", 1.0, tags);
-             _bytesSentCount = new Count(transport, this, "datadog.dogstatsd.client.bytes_sent", 1.0, tags);
-             _bytesDroppedCount = new Count(transport, this, "datadog.dogstatsd.client.bytes_dropped", 1.0, tags);
-             _bytesDroppedQueueCount = new Count(transport, this, "datadog.dogstatsd.client.bytes_dropped_queue", 1.0, tags);
-             _bytesDroppedWriterCount = new Count(transport, this, "datadog.dogstatsd.client.bytes_dropped_writer", 1.0, tags);
-             _packetsSentCount = new Count(transport, this, "datadog.dogstatsd.client.packets_sent", 1.0, tags);
-             _packetsDroppedCount = new Count(transport, this, "datadog.dogstatsd.client.packets_dropped", 1.0, tags);
-             _packetsDroppedQueueCount = new Count(transport, this, "datadog.dogstatsd.client.packets_dropped_queue", 1.0, tags);
-             _packetsDroppedWriterCount = new Count(transport, this, "datadog.dogstatsd.client.packets_dropped_writer", 1.0, tags);
-
-             _flushTimer = new Timer(Flush, null, FlushInterval, FlushInterval);
+             _metricsCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.metrics", tags);
+             _eventsCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.events", tags);
+             _serviceChecksCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.service_checks", tags);
+             _bytesSentCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_sent", tags);
+             _bytesDroppedCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_dropped", tags);
+             _bytesDroppedQueueCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_dropped_queue", tags);
+             _bytesDroppedWriterCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_dropped_writer", tags);
+             _packetsSentCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_sent", tags);
+             _packetsDroppedCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_dropped", tags);
+             _packetsDroppedQueueCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_dropped_queue", tags);
+             _packetsDroppedWriterCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_dropped_writer", tags);
         }
 
-        public void MetricSent() => Interlocked.Increment(ref _metrics);
-        public void EventSent() => Interlocked.Increment(ref _events);
-        public void ServiceCheckSent() => Interlocked.Increment(ref _serviceChecks);
+        public void MetricSent() => _metricsCount.Increment();
+        public void EventSent() => _eventsCount.Increment();
+        public void ServiceCheckSent() => _serviceChecksCount.Increment();
 
         public void PacketSent(int size)
         {
-            Interlocked.Add(ref _bytesSent, size);
-            Interlocked.Increment(ref _packetsSent);
+            _bytesSentCount.Increment(size);
+            _packetsSentCount.Increment();
         }
 
         public void PacketDropped(int size, bool queue)
         {
-            Interlocked.Add(ref _bytesDropped, size);
-            Interlocked.Increment(ref _packetsDropped);
+            _bytesDroppedCount.Increment(size);
+            _packetsDroppedCount.Increment();
 
             if (queue)
             {
-                Interlocked.Add(ref _bytesDroppedQueue, size);
-                Interlocked.Increment(ref _packetsDroppedQueue);
+                _bytesDroppedQueueCount.Increment(size);
+                _packetsDroppedQueueCount.Increment();
             }
             else
             {
-                Interlocked.Add(ref _bytesDroppedWriter, size);
-                Interlocked.Increment(ref _packetsDroppedWriter);
+                _bytesDroppedWriterCount.Increment(size);
+                _packetsDroppedWriterCount.Increment();
             }
         }
 
         public void Dispose()
         {
-            _flushTimer.Dispose();
-        }
-
-        private void Flush(object _)
-        {
-            _metricsCount.Increment(Interlocked.Exchange(ref _metrics, 0));
-            _eventsCount.Increment(Interlocked.Exchange(ref _events, 0));
-            _serviceChecksCount.Increment(Interlocked.Exchange(ref _serviceChecks, 0));
-            _bytesSentCount.Increment(Interlocked.Exchange(ref _bytesSent, 0));
-            _bytesDroppedCount.Increment(Interlocked.Exchange(ref _bytesDropped, 0));
-            _bytesDroppedQueueCount.Increment(Interlocked.Exchange(ref _bytesDroppedQueue, 0));
-            _bytesDroppedWriterCount.Increment(Interlocked.Exchange(ref _bytesDroppedWriter, 0));
-            _packetsSentCount.Increment(Interlocked.Exchange(ref _packetsSent, 0));
-            _packetsDroppedCount.Increment(Interlocked.Exchange(ref _packetsDropped, 0));
-            _packetsDroppedQueueCount.Increment(Interlocked.Exchange(ref _packetsDroppedQueue, 0));
-            _packetsDroppedWriterCount.Increment(Interlocked.Exchange(ref _packetsDroppedWriter, 0));
+            _metricsCount.Dispose();
+            _eventsCount.Dispose();
+            _serviceChecksCount.Dispose();
+            _bytesSentCount.Dispose();
+            _bytesDroppedCount.Dispose();
+            _bytesDroppedQueueCount.Dispose();
+            _bytesDroppedWriterCount.Dispose();
+            _packetsSentCount.Dispose();
+            _packetsDroppedCount.Dispose();
+            _packetsDroppedQueueCount.Dispose();
+            _packetsDroppedWriterCount.Dispose();
         }
     }
 }

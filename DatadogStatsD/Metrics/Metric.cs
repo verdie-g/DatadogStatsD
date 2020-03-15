@@ -13,7 +13,8 @@ namespace DatadogStatsD.Metrics
         private readonly byte[]? _sampleRateBytes;
         private readonly byte[] _tagsBytes;
 
-        internal Metric(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags, bool includeSampleRate)
+        internal Metric(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate,
+            IList<string>? tags, bool includeSampleRate)
         {
             _transport = transport;
             _telemetry = telemetry;

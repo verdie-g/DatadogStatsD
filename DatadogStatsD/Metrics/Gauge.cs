@@ -12,21 +12,22 @@ namespace DatadogStatsD.Metrics
     public class Gauge : Metric
     {
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Gauge);
-        private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10); // only the last value is kept
-        private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
 
-        private readonly ElapsedEventHandler _onElapsed;
+        private readonly Timer _tickTimer;
+        private readonly ElapsedEventHandler _onTick;
 
-        internal Gauge(ITransport transport, ITelemetry telemetry, string metricName, Func<double> evaluator, IList<string>? tags)
+        internal Gauge(ITransport transport, ITelemetry telemetry, Timer tickTimer, string metricName,
+            Func<double> evaluator, IList<string>? tags)
             : base(transport, telemetry, metricName, 1.0, tags, false)
         {
-            _onElapsed = (_, __) => Send(evaluator(), TypeBytes);
-            TickTimer.Elapsed += _onElapsed;
+            _tickTimer = tickTimer;
+            _onTick = (_, __) => Send(evaluator(), TypeBytes);
+            _tickTimer.Elapsed += _onTick;
         }
 
         public override void Dispose()
         {
-            TickTimer.Elapsed -= _onElapsed;
+            _tickTimer.Elapsed -= _onTick;
         }
     }
 }
