@@ -15,10 +15,18 @@ namespace DatadogStatsD.Metrics
         private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10); // only the last value is kept
         private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
 
+        private readonly ElapsedEventHandler _onElapsed;
+
         internal Gauge(ITransport transport, ITelemetry telemetry, string metricName, Func<double> evaluator, IList<string>? tags)
             : base(transport, telemetry, metricName, 1.0, tags, false)
         {
-            TickTimer.Elapsed += (_, __) => Send(evaluator(), TypeBytes);
+            _onElapsed = (_, __) => Send(evaluator(), TypeBytes);
+            TickTimer.Elapsed += _onElapsed;
+        }
+
+        public override void Dispose()
+        {
+            TickTimer.Elapsed -= _onElapsed;
         }
     }
 }

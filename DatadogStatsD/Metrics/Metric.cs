@@ -1,9 +1,10 @@
+using System;
 using System.Collections.Generic;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD.Metrics
 {
-    public abstract class Metric
+    public abstract class Metric : IDisposable
     {
         private readonly ITransport _transport;
         private readonly ITelemetry _telemetry;
@@ -20,6 +21,10 @@ namespace DatadogStatsD.Metrics
             _sampleRate = sampleRate;
             _sampleRateBytes = includeSampleRate ? DogStatsDSerializer.SerializeSampleRate(sampleRate) : null;
             _tagsBytes = DogStatsDSerializer.SerializeTags(tags);
+        }
+
+        public virtual void Dispose()
+        {
         }
 
         protected void Send(double value, byte[] typeBytes)
