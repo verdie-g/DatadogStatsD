@@ -9,7 +9,8 @@ namespace DatadogStatsD.Test
         [Test]
         public void ShouldThrowIfSocketDoesntExist()
         {
-            Assert.Throws<SocketException>(() => new UdsSocket("toto"));
+            var ex = Assert.Catch(() => new UdsSocket("toto"));
+            Assert.IsInstanceOf<SocketException>(ex);
         }
     }
 }

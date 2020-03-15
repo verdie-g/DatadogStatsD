@@ -11,10 +11,7 @@ namespace DatadogStatsD.Transport
         public UdsSocket(string path)
         {
             var endpoint = new UnixDomainSocketEndPoint(path);
-            _underlyingSocket = new Socket(AddressFamily.Unix, SocketType.Dgram, ProtocolType.IP)
-            {
-                NoDelay = true,
-            };
+            _underlyingSocket = new Socket(AddressFamily.Unix, SocketType.Dgram, ProtocolType.IP);
             _underlyingSocket.Connect(endpoint);
         }
 
