@@ -25,8 +25,8 @@ namespace DatadogStatsD
         private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
 
         private readonly DogStatsDConfiguration _conf;
-        private readonly NonBlockingBufferedTransport _transport;
-        private readonly Telemetry _telemetry;
+        private readonly ITransport _transport;
+        private readonly ITelemetry _telemetry;
 
         public DogStatsD() : this(DefaultConfiguration)
         {
@@ -55,7 +55,9 @@ namespace DatadogStatsD
             }
 
             _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
-            _telemetry = new Telemetry(transportName, _transport, TickTimer);
+            _telemetry = _conf.Telemetry
+                ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer)
+                : (ITelemetry)new NoopTelemetry();
             _transport.OnPacketSent += size => _telemetry.PacketSent(size);
             _transport.OnPacketDropped += (size, queue) => _telemetry.PacketDropped(size, queue);
         }

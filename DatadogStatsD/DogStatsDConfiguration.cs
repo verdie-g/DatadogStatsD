@@ -29,5 +29,10 @@ namespace DatadogStatsD
         /// Namespace to prefix all metrics, events, and service checks.
         /// </summary>
         public string? Namespace { get; set; }
+
+        /// <summary>
+        /// Enabled telemetry. Defaults to true.
+        /// </summary>
+        public bool Telemetry { get; set; } = true;
     }
 }
