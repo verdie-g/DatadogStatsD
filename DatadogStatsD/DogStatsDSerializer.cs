@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using DatadogStatsD.Metrics;
@@ -202,7 +203,7 @@ namespace DatadogStatsD
             }
             else
             {
-                value.TryFormat(valueChars, out valueCharsSize, "0.000000");
+                value.TryFormat(valueChars, out valueCharsSize, "0.000000", CultureInfo.InvariantCulture);
             }
 
             valueChars = valueChars.Slice(0, valueCharsSize);
