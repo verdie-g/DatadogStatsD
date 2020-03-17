@@ -1,8 +1,8 @@
 using System;
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace DatadogStatsD.Transport
@@ -15,12 +15,9 @@ namespace DatadogStatsD.Transport
         private readonly ISocket _socket;
         private readonly int _maxBufferingSize;
         private readonly TimeSpan _maxBufferingTime;
-        private readonly int _maxQueueSize;
-        private readonly BlockingCollection<ArraySegment<byte>> _queue;
-        private readonly CancellationTokenSource _cancellationTokenSource;
-
-        // eventually consistent size of _queue
-        private int _queueSize;
+        private readonly Channel<ArraySegment<byte>> _chan;
+        private readonly Task _sendBuffersTask;
+        private readonly CancellationTokenSource _sendBuffersCancellation;
 
         public NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime,
             int maxQueueSize)
@@ -33,34 +30,43 @@ namespace DatadogStatsD.Transport
 
         // internal for testing
         internal NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime,
-            int maxQueueSize, CancellationTokenSource cancellationTokenSource)
+            int maxQueueSize, CancellationTokenSource sendBuffersCancellation)
         {
             _socket = socket;
             _maxBufferingSize = maxBufferingSize;
             _maxBufferingTime = maxBufferingTime;
-            _maxQueueSize = maxQueueSize;
-            _queue = new BlockingCollection<ArraySegment<byte>>(new ConcurrentQueue<ArraySegment<byte>>());
-            _cancellationTokenSource = cancellationTokenSource;
-
-            Task.Run(SendBuffers, _cancellationTokenSource.Token);
+            _chan = Channel.CreateBounded<ArraySegment<byte>>(new BoundedChannelOptions(maxQueueSize)
+            {
+                SingleReader = true,
+                SingleWriter = false,
+            });
+            _sendBuffersCancellation = sendBuffersCancellation;
+            _sendBuffersTask = Task.Run(SendBuffers, _sendBuffersCancellation.Token);
         }
 
         public void Send(ArraySegment<byte> buffer)
         {
-            if (_queueSize >= _maxQueueSize)
+            if (_chan.Writer.TryWrite(buffer))
             {
-                OnPacketDropped(buffer.Count, true);
-                ArrayPool<byte>.Shared.Return(buffer.Array);
                 return;
             }
 
-            _queue.Add(buffer);
-            Interlocked.Increment(ref _queueSize);
+            OnPacketDropped(buffer.Count, true);
+            ArrayPool<byte>.Shared.Return(buffer.Array);
         }
 
         public void Dispose()
         {
-            _cancellationTokenSource.Cancel();
+            _sendBuffersCancellation.Cancel();
+            try
+            {
+                _sendBuffersTask.GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            _sendBuffersTask.Dispose();
+            _sendBuffersCancellation.Dispose();
             _socket.Dispose();
         }
 
@@ -70,11 +76,24 @@ namespace DatadogStatsD.Transport
 
             while (true)
             {
-                bool taken = _queue.TryTake(out var buffer,
-                    (int)bufferingCtx.RemainingBufferingTime.TotalMilliseconds,
-                    _cancellationTokenSource.Token);
+                if (bufferingCtx.BufferingCancellation.IsCancellationRequested)
+                {
+                    bufferingCtx.BufferingCancellation.Dispose();
+                    bufferingCtx.BufferingCancellation = CancellationTokenSource.CreateLinkedTokenSource(_sendBuffersCancellation.Token);
+                }
 
-                if (!taken) // timeout reached
+                // the try block was not extract in its own method to avoid the cost of a new async state machine
+                ArraySegment<byte> buffer;
+                try
+                {
+                    bufferingCtx.BufferingCancellation.CancelAfter(bufferingCtx.RemainingBufferingTime);
+                    buffer = await _chan.Reader.ReadAsync(bufferingCtx.BufferingCancellation.Token);
+
+                    // make sure it doesn't get cancelled so it can be reused in the next iteration
+                    // Timeout.Infinite won't work because it would delete the underlying timer
+                    bufferingCtx.BufferingCancellation.CancelAfter(int.MaxValue);
+                }
+                catch (OperationCanceledException) when (!_sendBuffersCancellation.IsCancellationRequested) // timeout reached
                 {
                     if (!bufferingCtx.Empty)
                     {
@@ -85,10 +104,8 @@ namespace DatadogStatsD.Transport
                         bufferingCtx.Reset();
                     }
 
-                    continue; // buffer is outdated so don't go any further
+                    continue;
                 }
-
-                Interlocked.Decrement(ref _queueSize);
 
                 if (buffer.Count > _maxBufferingSize)
                 {
@@ -138,14 +155,16 @@ namespace DatadogStatsD.Transport
             public bool Empty => _size == 0;
             public TimeSpan RemainingBufferingTime => TimeSpan.FromMilliseconds(Math.Max(0, _maxBufferingTime.TotalMilliseconds - _stopwatch.Elapsed.TotalMilliseconds));
             public ArraySegment<byte> Segment => new ArraySegment<byte>(_buffer, 0, _size - 1); // -1 for extra '\n'
+            public CancellationTokenSource BufferingCancellation { get; set; } = new CancellationTokenSource();
 
             public BufferingContext(int maxBufferingSize, TimeSpan maxBufferingTime)
             {
                 _maxBufferingSize = maxBufferingSize;
                 _maxBufferingTime = maxBufferingTime;
                 _buffer = new byte[maxBufferingSize + 1]; // +1 for extra '\n'
-                _size = 0;
                 _stopwatch = new Stopwatch();
+                _size = 0;
+
                 _stopwatch.Start();
             }
 

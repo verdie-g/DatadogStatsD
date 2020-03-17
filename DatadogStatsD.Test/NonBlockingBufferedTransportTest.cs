@@ -116,36 +116,6 @@ namespace DatadogStatsD.Test
         }
 
         [Test]
-        public async Task IncomingMessagesAreDiscardedIfQueueIsFull()
-        {
-            var socket = new Mock<ISocket>();
-            var transport = new NonBlockingBufferedTransport(socket.Object, 20, TimeSpan.FromMilliseconds(1000), 2);
-
-            transport.Send(CreateBuffer(1));
-            transport.Send(CreateBuffer(2));
-            // queue is full, next sends shouldn't do anything
-            transport.Send(CreateBuffer(4));
-            transport.Send(CreateBuffer(8));
-            await Task.Delay(1500);
-            VerifySendCalledWithBufferOfSize(socket, 4, Times.Once());
-        }
-
-        [Test]
-        public async Task IncomingMessagesArentDiscardedIfQueueIsNotFullAnymore()
-        {
-            var socket = new Mock<ISocket>();
-            var transport = new NonBlockingBufferedTransport(socket.Object, 20, TimeSpan.FromMilliseconds(1000), 2);
-
-            transport.Send(CreateBuffer(1));
-            transport.Send(CreateBuffer(2));
-            await Task.Delay(1500);
-            // queue is not full anymore
-            transport.Send(CreateBuffer(5));
-            await Task.Delay(1500);
-            VerifySendCalledWithBufferOfSize(socket, 5, Times.Once());
-        }
-
-        [Test]
         public async Task ResumesCorrectlyAfterASocketException()
         {
             var socket = new Mock<ISocket>();
@@ -160,6 +130,14 @@ namespace DatadogStatsD.Test
             transport.Send(CreateBuffer(10));
             await Task.Delay(4000); // wait two buffering timeout
             VerifySendCalledWithBufferOfSize(socket, 10, Times.Exactly(2));
+        }
+
+        [Test]
+        public void DisposeReturnsCorrectly()
+        {
+            var socket = new Mock<ISocket>();
+            var transport = new NonBlockingBufferedTransport(socket.Object, 20, TimeSpan.FromMilliseconds(1000), 2);
+            transport.Dispose();
         }
 
         private ArraySegment<byte> CreateBuffer(int size)

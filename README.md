@@ -49,19 +49,18 @@ counts and gauges, so for 10000 increments, one packet is sent, hence the ~0 byt
 # Histogram, Set, Distribution
 
 ```
-|        Method |     Op |       Mean |     Error |     StdDev |      Gen 0 | Gen 1 | Gen 2 |   Allocated |
-|-------------- |------- |-----------:|----------:|-----------:|-----------:|------:|------:|------------:|
-| DatadogStatsD |   1000 |   1.396 ms | 0.0279 ms |  0.0700 ms |    82.0313 |     - |     - |   126.19 KB |
-|  DatadogSharp |   1000 |   3.782 ms | 0.0706 ms |  0.0661 ms |   355.4688 |     - |     - |   545.79 KB |
-|  StatsDClient |   1000 |   4.897 ms | 0.0829 ms |  0.0692 ms |   578.1250 |     - |     - |   890.64 KB |
-| DatadogStatsD |  10000 |  14.555 ms | 0.2901 ms |  0.7278 ms |   984.3750 |     - |     - |  1526.26 KB |
-|  DatadogSharp |  10000 |  38.852 ms | 0.7309 ms |  0.7179 ms |  3500.0000 |     - |     - |  5467.66 KB |
-|  StatsDClient |  10000 |  50.762 ms | 0.5816 ms |  0.5156 ms |  5800.0000 |     - |     - |   8976.6 KB |
-| DatadogStatsD | 100000 | 141.765 ms | 3.0557 ms |  9.0097 ms |  7750.0000 |     - |     - | 12078.77 KB |
-|  DatadogSharp | 100000 | 395.236 ms | 3.4644 ms |  3.0711 ms | 35000.0000 |     - |     - |  54686.9 KB |
-|  StatsDClient | 100000 | 495.184 ms | 9.6524 ms | 11.4905 ms | 58000.0000 |     - |     - | 89836.03 KB |
+|        Method |     Op |       Mean |     Error |    StdDev |     Median |      Gen 0 | Gen 1 | Gen 2 |   Allocated |
+|-------------- |------- |-----------:|----------:|----------:|-----------:|-----------:|------:|------:|------------:|
+| DatadogStatsD |   1000 |   1.444 ms | 0.0284 ms | 0.0540 ms |   1.447 ms |    23.4375 |     - |     - |    35.38 KB |
+|  DatadogSharp |   1000 |   2.851 ms | 0.0162 ms | 0.0143 ms |   2.851 ms |   355.4688 |     - |     - |   545.79 KB |
+|  StatsDClient |   1000 |   3.691 ms | 0.0247 ms | 0.0231 ms |   3.691 ms |   578.1250 |     - |     - |   890.64 KB |
+| DatadogStatsD |  10000 |  14.238 ms | 0.2806 ms | 0.6502 ms |  14.373 ms |   203.1250 |     - |     - |    310.2 KB |
+|  DatadogSharp |  10000 |  27.880 ms | 0.1069 ms | 0.0947 ms |  27.896 ms |  3562.5000 |     - |     - |  5467.69 KB |
+|  StatsDClient |  10000 |  37.435 ms | 0.3046 ms | 0.2700 ms |  37.400 ms |  5857.1429 |     - |     - |  8976.56 KB |
+| DatadogStatsD | 100000 | 144.595 ms | 2.8810 ms | 8.1729 ms | 147.057 ms |  2000.0000 |     - |     - |  3232.81 KB |
+|  DatadogSharp | 100000 | 314.129 ms | 3.0197 ms | 2.8246 ms | 313.519 ms | 35000.0000 |     - |     - | 54686.41 KB |
+|  StatsDClient | 100000 | 360.540 ms | 2.7272 ms | 2.5510 ms | 360.405 ms | 58000.0000 |     - |     - | 89835.94 KB |
 ```
 
 For those metrics, the library lets DogStatsD agent do the aggregation, so with a sample rate of 1.0, each call to
-Histogram.Update will be sent to the agent. The allocations are mostly due to [BlockingCollection.TryTake](https://docs.microsoft.com/en-us/dotnet/api/system.collections.concurrent.blockingcollection-1.trytake)
-inefficiencies (see [#1](https://github.com/verdie-g/DatadogStatsD/issues/1)).
+Histogram.Update will be sent to the agent.
