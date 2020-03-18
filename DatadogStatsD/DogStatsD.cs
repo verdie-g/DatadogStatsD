@@ -21,7 +21,7 @@ namespace DatadogStatsD
         private static readonly TimeSpan MaxBufferingTime = TimeSpan.FromSeconds(2);
         private static readonly DogStatsDConfiguration DefaultConfiguration = new DogStatsDConfiguration();
         // https://docs.datadoghq.com/developers/dogstatsd/data_aggregation#how-is-aggregation-performed-with-the-dogstatsd-server
-        private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10) - MaxBufferingTime;
+        private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10) - MaxBufferingTime - TimeSpan.FromMilliseconds(500);
         private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
 
         private readonly DogStatsDConfiguration _conf;
