@@ -26,7 +26,7 @@ namespace DatadogStatsD
         public IList<string>? ConstantTags { get; set; }
 
         /// <summary>
-        /// Namespace to prefix all metrics, events, and service checks.
+        /// Namespace to prefix all metrics.
         /// </summary>
         public string? Namespace { get; set; }
 
@@ -34,5 +34,10 @@ namespace DatadogStatsD
         /// Enabled telemetry. Defaults to true.
         /// </summary>
         public bool Telemetry { get; set; } = true;
+
+        /// <summary>
+        /// Source to use for events.
+        /// </summary>
+        public string? Source { get; set; }
     }
 }

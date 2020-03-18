@@ -1,6 +1,6 @@
 # DatadogStatsD
 Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) client:
-- Count, Histogram, Gauge, Distribution, Set
+- Count, Histogram, Gauge, Distribution, Set, Event
 - **UDP** or **UDS** transport
 - **Performance** - Metrics are aggregated and the submissions are batched
 - **Back pressure** - Transport drops new metrics when it's falling behind
@@ -12,13 +12,15 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
 ```csharp
 using var dogStatsD = new DogStatsD();
 
-var exampleMetric = dogStatsD.CreateCount("example_metric", 1.0, new[] { "environment:dev" });
+using var exampleMetric = dogStatsD.CreateCount("example_metric", 1.0, new[] { "environment:dev" });
 exampleMetric.Increment();
 exampleMetric.Decrement();
 
-var exampleMetric2 = dogStatsD.CreateHistogram("example_metric2");
+using var exampleMetric2 = dogStatsD.CreateHistogram("example_metric2");
 exampleMetric2.Update(5.423);
 exampleMetric2.Update(1.27);
+
+dogStasD.RaiseEvent(AlertType.Info, "Bad thing happened", "This happened");
 ```
 
 # Benchmark

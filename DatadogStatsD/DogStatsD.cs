@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
+using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.Transport;
 
@@ -25,6 +26,8 @@ namespace DatadogStatsD
         private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
 
         private readonly DogStatsDConfiguration _conf;
+        private readonly byte[] _sourceBytes;
+        private readonly byte[] _constantTagsBytes;
         private readonly ITransport _transport;
         private readonly ITelemetry _telemetry;
 
@@ -35,6 +38,8 @@ namespace DatadogStatsD
         public DogStatsD(DogStatsDConfiguration conf)
         {
             _conf = conf;
+            _sourceBytes = DogStatsDSerializer.SerializeSource(_conf.Source);
+            _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(_conf.ConstantTags);
 
             ISocket socket;
             int maxBufferingSize;
@@ -110,6 +115,25 @@ namespace DatadogStatsD
                 _telemetry,
                 PrependNamespace(metricName),
                 PrependConstantTags(tags));
+        }
+
+        /// <summary>
+        /// Post an event to the stream. The source of the event is defined with <see cref="DogStatsDConfiguration.Source"/>.
+        /// </summary>
+        /// <param name="alertType">The level of alert of the event.</param>
+        /// <param name="title">The event title. Limited to 100 characters.</param>
+        /// <param name="message">The body of the event. Limited to 4000 characters. The text supports markdown.</param>
+        /// <param name="priority">The priority of the event.</param>
+        /// <param name="aggregationKey">
+        /// An arbitrary string to use for aggregation. Limited to 100 characters. If you specify a key, all events
+        /// using that key are grouped together in the Event Stream.
+        /// </param>
+        /// <param name="tags">A list of tags to apply to the event. They are append to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
+        public void RaiseEvent(AlertType alertType, string title, string message, Priority priority = Priority.Normal,
+            string? aggregationKey = null, IList<string>? tags = null)
+        {
+            _transport.Send(DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, _sourceBytes,
+                aggregationKey, _constantTagsBytes, tags));
         }
 
         public void Dispose()

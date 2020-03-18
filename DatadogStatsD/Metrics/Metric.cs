@@ -21,7 +21,7 @@ namespace DatadogStatsD.Metrics
             _metricNameBytes = DogStatsDSerializer.SerializeMetricName(metricName);
             _sampleRate = sampleRate;
             _sampleRateBytes = includeSampleRate ? DogStatsDSerializer.SerializeSampleRate(sampleRate) : null;
-            _tagsBytes = DogStatsDSerializer.SerializeTags(tags);
+            _tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags);
         }
 
         public virtual void Dispose()
