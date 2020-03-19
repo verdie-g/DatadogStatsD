@@ -1,6 +1,8 @@
 # DatadogStatsD
 Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) client:
-- Count, Histogram, Gauge, Distribution, Set, Event
+- Count, Histogram, Gauge, Distribution, Set
+- Events
+- Service Checks
 - **UDP** or **UDS** transport
 - **Performance** - Metrics are aggregated and the submissions are batched
 - **Back pressure** - Transport drops new metrics when it's falling behind
@@ -21,6 +23,7 @@ exampleMetric2.Update(5.423);
 exampleMetric2.Update(1.27);
 
 dogStasD.RaiseEvent(AlertType.Info, "Bad thing happened", "This happened");
+dogStasD.SendServiceCheck("is_connected", CheckStatus.Ok);
 ```
 
 # Benchmark
