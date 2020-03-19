@@ -12,7 +12,7 @@ namespace DatadogStatsD.Sample
         {
             using var dog = new DogStatsD(new DogStatsDConfiguration
             {
-                Namespace = "toto",
+                Namespace = "test",
                 ConstantTags = new[] { "env:dev" },
                 Source = "evian",
             });
@@ -22,9 +22,11 @@ namespace DatadogStatsD.Sample
             var sw = new Stopwatch();
             var rdn = new Random();
 
-            using var count = dog.CreateCount("test.incr");
-            using var gauge = dog.CreateGauge("test.gauge", () => i);
-            using var hist = dog.CreateHistogram("test.hist", 0.5);
+            using var count = dog.CreateCount("count");
+            using var gauge = dog.CreateGauge("gauge", () => i);
+            using var hist = dog.CreateHistogram("histogram", 0.5);
+            using var set = dog.CreateSet("set");
+            using var distribution = dog.CreateDistribution("distribution");
 
             for (; i < 100_000_000; i += 1)
             {
@@ -44,6 +46,8 @@ namespace DatadogStatsD.Sample
 
                 await Task.Delay(delay);
                 hist.Update(sw.ElapsedMilliseconds);
+                set.Add(i % 2);
+                distribution.Record(i % 10);
             }
         }
     }
