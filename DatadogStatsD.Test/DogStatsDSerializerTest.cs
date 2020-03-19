@@ -109,7 +109,7 @@ namespace DatadogStatsD.Test
         [TestCase(10)]
         public void SerializeMetricTypeArgumentException(MetricType type)
         {
-            Assert.Throws<System.IndexOutOfRangeException>(() => DogStatsDSerializer.SerializeMetricType(type));
+            Assert.Throws<IndexOutOfRangeException>(() => DogStatsDSerializer.SerializeMetricType(type));
         }
 
         [TestCase(0.0000001)]
@@ -118,6 +118,26 @@ namespace DatadogStatsD.Test
         public void SerializeSampleRateArgumentException(double sampleRate)
         {
             Assert.Throws<ArgumentException>(() => DogStatsDSerializer.SerializeSampleRate(sampleRate));
+        }
+
+        [Test]
+        public void EventTitleIsTruncated()
+        {
+            string title = string.Create<object>(101, null, (chars, _) => chars.Fill('a'));
+            var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, title, "", EventPriority.Normal,
+                Array.Empty<byte>(), null, Array.Empty<byte>(), null);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            Assert.AreEqual($"_e{{100,0000}}:{title.Substring(0, 100)}|", serviceCheckStr);
+        }
+
+        [Test]
+        public void EventMessageIsTruncated()
+        {
+            string message = string.Create<object>(4001, null, (chars, _) => chars.Fill('a'));
+            var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, "", message, EventPriority.Normal,
+                Array.Empty<byte>(), null, Array.Empty<byte>(), null);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            Assert.AreEqual($"_e{{000,4000}}:|{message.Substring(0, 4000)}", serviceCheckStr);
         }
     }
 }

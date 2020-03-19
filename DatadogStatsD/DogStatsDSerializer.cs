@@ -369,7 +369,8 @@ namespace DatadogStatsD
         {
             // _e{<TITLE>.length,<TEXT>.length}:<TITLE>|<TEXT>
             int length = EventPrefixBytes.Length + 1 + EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth + 2
-                       + Encoding.UTF8.GetByteCount(title) + 1 + Encoding.UTF8.GetByteCount(message);
+                         + Encoding.UTF8.GetByteCount(title, 0, Math.Min(title.Length, EventTitleMaxLength)) + 1
+                         + Encoding.UTF8.GetByteCount(message, 0, Math.Min(message.Length, EventMessageMaxLength));
 
             if (priority != EventPriority.Normal)
             {
