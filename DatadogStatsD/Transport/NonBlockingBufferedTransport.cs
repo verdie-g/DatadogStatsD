@@ -46,7 +46,7 @@ namespace DatadogStatsD.Transport
 
         public void Send(ArraySegment<byte> buffer)
         {
-            if (!_sendBuffersCancellation.IsCancellationRequested && _chan.Writer.TryWrite(buffer))
+            if (!_sendBuffersTask.IsCompleted && _chan.Writer.TryWrite(buffer))
             {
                 return;
             }
