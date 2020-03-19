@@ -34,7 +34,7 @@ namespace DatadogStatsD.Sample
                 if (i % (2000 / delay) == 0)
                 {
                     dog.RaiseEvent((AlertType)rdn.Next(3), "Bad thing happened " + i, "The cloud transpilation to Rust failed",
-                        (Priority)rdn.Next(1), "rust_fail", new[] { "extratag" });
+                        (EventPriority)rdn.Next(1), "rust_fail", new[] { "extratag" });
                 }
 
                 if (i % (5000 / delay) == 0)

@@ -132,7 +132,7 @@ namespace DatadogStatsD
         /// using that key are grouped together in the Event Stream.
         /// </param>
         /// <param name="tags">A list of tags to apply to the event. They are appended to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public void RaiseEvent(AlertType alertType, string title, string message, Priority priority = Priority.Normal,
+        public void RaiseEvent(AlertType alertType, string title, string message, EventPriority priority = EventPriority.Normal,
             string? aggregationKey = null, IList<string>? tags = null)
         {
             _transport.Send(DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, _sourceBytes,

@@ -1,6 +1,6 @@
 namespace DatadogStatsD.Events
 {
-    public enum Priority
+    public enum EventPriority
     {
         Normal,
         Low,

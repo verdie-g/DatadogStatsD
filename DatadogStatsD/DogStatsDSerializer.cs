@@ -136,7 +136,7 @@ namespace DatadogStatsD
         /// <param name="tags"></param>
         /// <returns></returns>
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=events</remarks>
-        public static ArraySegment<byte> SerializeEvent(AlertType alertType, string title, string message, Priority priority,
+        public static ArraySegment<byte> SerializeEvent(AlertType alertType, string title, string message, EventPriority priority,
             byte[] sourceBytes, string? aggregationKey, byte[] constantTagsBytes, IList<string>? tags)
         {
             tags ??= Array.Empty<string>();
@@ -178,7 +178,7 @@ namespace DatadogStatsD
             Encoding.ASCII.GetBytes(lengthString.Slice(0, lengthStringLength),
                 new Span<byte>(eventBytes, lengthIndex, EventMessageMaxLengthWidth));
 
-            if (priority != Priority.Normal)
+            if (priority != EventPriority.Normal)
             {
                 var priorityBytes = PriorityBytes[(int)priority];
                 Array.Copy(priorityBytes, 0, eventBytes, writeIndex, priorityBytes.Length);
@@ -450,14 +450,14 @@ namespace DatadogStatsD
             return length;
         }
 
-        private static int SerializedEventLength(AlertType alertType, string title, string message, Priority priority,
+        private static int SerializedEventLength(AlertType alertType, string title, string message, EventPriority priority,
             byte[] source, string? aggregationKey, byte[] constantTagsBytes, IList<string> extraTags)
         {
             // _e{<TITLE>.length,<TEXT>.length}:<TITLE>|<TEXT>
             int length = EventPrefixBytes.Length + 1 + EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth + 2
                        + Encoding.UTF8.GetByteCount(title) + 1 + Encoding.UTF8.GetByteCount(message);
 
-            if (priority != Priority.Normal)
+            if (priority != EventPriority.Normal)
             {
                 length += PriorityBytes[(int)priority].Length;
             }

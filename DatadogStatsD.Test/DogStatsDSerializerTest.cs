@@ -47,19 +47,19 @@ namespace DatadogStatsD.Test
             ArrayPool<byte>.Shared.Return(metricBytes.Array);
         }
 
-        [TestCase(AlertType.Info, "title", "message", Priority.Normal, null, null, null, null, "_e{005,0007}:title|message")]
-        [TestCase(AlertType.Info, "C'est un événement", "", Priority.Normal, null, null, null, null, "_e{020,0006}:C'est un événement|")]
-        [TestCase(AlertType.Success, "a", "b", Priority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:success")]
-        [TestCase(AlertType.Error, "a", "b", Priority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:error")]
-        [TestCase(AlertType.Warning, "a", "b", Priority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:warning")]
-        [TestCase(AlertType.Info, "a", "b", Priority.Low, null, null, null, null, "_e{001,0001}:a|b|p:low")]
-        [TestCase(AlertType.Info, "a", "b", Priority.Normal, "cristaline", null, null, null, "_e{001,0001}:a|b|s:cristaline")]
-        [TestCase(AlertType.Info, "a", "b", Priority.Normal, null, "aggr", null, null, "_e{001,0001}:a|b|k:aggr")]
-        [TestCase(AlertType.Info, "a", "b", Priority.Normal, null, null, "ab,cd", null, "_e{001,0001}:a|b|#ab,cd")]
-        [TestCase(AlertType.Info, "a", "b", Priority.Normal, null, null, null, "ef,gh", "_e{001,0001}:a|b|#ef,gh")]
-        [TestCase(AlertType.Info, "a", "b", Priority.Normal, null, null, "ab,cd", "ef,gh", "_e{001,0001}:a|b|#ab,cd,ef,gh")]
-        [TestCase(AlertType.Success, "Ton pote Jean-Mi", "contiguïté", Priority.Low, "evian", "clef", "ab,cd", "ef,gh", "_e{016,0012}:Ton pote Jean-Mi|contiguïté|p:low|t:success|k:clef|s:evian|#ab,cd,ef,gh")]
-        public void SerializeEvent(AlertType alertType, string title, string message, Priority priority, string source,
+        [TestCase(AlertType.Info, "title", "message", EventPriority.Normal, null, null, null, null, "_e{005,0007}:title|message")]
+        [TestCase(AlertType.Info, "C'est un événement", "", EventPriority.Normal, null, null, null, null, "_e{020,0006}:C'est un événement|")]
+        [TestCase(AlertType.Success, "a", "b", EventPriority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:success")]
+        [TestCase(AlertType.Error, "a", "b", EventPriority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:error")]
+        [TestCase(AlertType.Warning, "a", "b", EventPriority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:warning")]
+        [TestCase(AlertType.Info, "a", "b", EventPriority.Low, null, null, null, null, "_e{001,0001}:a|b|p:low")]
+        [TestCase(AlertType.Info, "a", "b", EventPriority.Normal, "cristaline", null, null, null, "_e{001,0001}:a|b|s:cristaline")]
+        [TestCase(AlertType.Info, "a", "b", EventPriority.Normal, null, "aggr", null, null, "_e{001,0001}:a|b|k:aggr")]
+        [TestCase(AlertType.Info, "a", "b", EventPriority.Normal, null, null, "ab,cd", null, "_e{001,0001}:a|b|#ab,cd")]
+        [TestCase(AlertType.Info, "a", "b", EventPriority.Normal, null, null, null, "ef,gh", "_e{001,0001}:a|b|#ef,gh")]
+        [TestCase(AlertType.Info, "a", "b", EventPriority.Normal, null, null, "ab,cd", "ef,gh", "_e{001,0001}:a|b|#ab,cd,ef,gh")]
+        [TestCase(AlertType.Success, "Ton pote Jean-Mi", "contiguïté", EventPriority.Low, "evian", "clef", "ab,cd", "ef,gh", "_e{016,0012}:Ton pote Jean-Mi|contiguïté|p:low|t:success|k:clef|s:evian|#ab,cd,ef,gh")]
+        public void SerializeEvent(AlertType alertType, string title, string message, EventPriority priority, string source,
             string aggregationKey, string constantTags, string extraTags, string expected)
         {
             byte[] sourceBytes = source != null ? Encoding.ASCII.GetBytes(source) : Array.Empty<byte>();
