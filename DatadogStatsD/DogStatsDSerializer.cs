@@ -353,12 +353,12 @@ namespace DatadogStatsD
 
             if (sampleRate != null && !sampleRate.SequenceEqual(MaxSampleRateBytes))
             {
-                length += 2 + sampleRate.Length; // '|@'
+                length += SampleRatePrefixBytes.Length + sampleRate.Length;
             }
 
             if (tags != null && tags.Length != 0)
             {
-                length += 2 + tags.Length; // '|#'
+                length += TagsPrefixBytes.Length + tags.Length;
             }
 
             return length;
