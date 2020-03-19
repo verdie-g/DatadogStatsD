@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using DatadogStatsD.Events;
@@ -27,6 +28,7 @@ namespace DatadogStatsD
 
         private const string EventPrefix = "_e";
         private const string ServiceCheckPrefix = "_sc";
+        private const string SampleRatePrefix = "|@";
         private const string AlertTypePrefix = "|t:";
         private const string PriorityPrefix = "|p:";
         private const string AggregationKeyPrefix = "|k:";
@@ -35,6 +37,7 @@ namespace DatadogStatsD
         private const string TagsPrefix  = "|#";
         private static readonly byte[] EventPrefixBytes = Encoding.ASCII.GetBytes(EventPrefix);
         private static readonly byte[] ServiceCheckPrefixBytes = Encoding.ASCII.GetBytes(ServiceCheckPrefix);
+        private static readonly byte[] SampleRatePrefixBytes = Encoding.ASCII.GetBytes(SampleRatePrefix);
         private static readonly byte[] AggregationKeyPrefixBytes = Encoding.ASCII.GetBytes(AggregationKeyPrefix);
         private static readonly byte[] SourcePrefixBytes = Encoding.ASCII.GetBytes(SourcePrefix);
         private static readonly byte[] ServiceCheckMessagePrefixBytes = Encoding.ASCII.GetBytes(ServiceCheckMessagePrefix);
@@ -66,75 +69,43 @@ namespace DatadogStatsD
         /// <summary>
         /// Serialize a metric with its value from pre-serialized parts.
         /// </summary>
-        /// <param name="metricName">Serialized metric name built with <see cref="SerializeMetricName"/>.</param>
+        /// <param name="metricNameBytes">Serialized metric name built with <see cref="SerializeMetricName"/>.</param>
         /// <param name="value">Metric value.</param>
-        /// <param name="type">Serialized metric type built with <see cref="SerializeMetricType"/>.</param>
+        /// <param name="typeBytes">Serialized metric type built with <see cref="SerializeMetricType"/>.</param>
         /// <param name="sampleRate">Serialized sample rate built with <see cref="SerializeSampleRate"/>. Can be null.</param>
-        /// <param name="tags">Serialized tags built with <see cref="ValidateAndSerializeTags"/>.</param>
+        /// <param name="tagsBytes">Serialized tags built with <see cref="ValidateAndSerializeTags"/>.</param>
         /// <returns>A segment of a byte array containing the serialized metric. The array was loaned from
         /// <see cref="ArrayPool{T}.Shared"/> and must be returned once it's not used.</returns>
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics</remarks>
-        public static ArraySegment<byte> SerializeMetric(byte[] metricName, double value, byte[] type, byte[]? sampleRate, byte[] tags)
+        public static ArraySegment<byte> SerializeMetric(byte[] metricNameBytes, double value, byte[] typeBytes, byte[]? sampleRate, byte[] tagsBytes)
         {
-            int length = SerializedMetricLength(metricName, value, type, sampleRate, tags);
-            byte[] metricBytes = ArrayPool<byte>.Shared.Rent(length);
-            int index = 0;
+            int length = SerializedMetricLength(metricNameBytes, value, typeBytes, sampleRate, tagsBytes);
+            var stream = new DogStatsDStream(length);
 
             // <METRIC_NAME>:<VALUE>|<TYPE>|@<SAMPLE_RATE>|#<TAGS>
 
-            // METRIC_NAME
-            Array.Copy(metricName, 0, metricBytes, index, metricName.Length);
-            index += metricName.Length;
-            metricBytes[index] = (byte)':';
-            index += 1;
+            stream.Write(metricNameBytes);
+            stream.Write((byte)':');
+            WriteValue(value, ref stream);
+            stream.Write((byte)'|');
+            stream.Write(typeBytes);
 
-            // VALUE
-            index += SerializeValue(value, metricBytes, index);
-            metricBytes[index] = (byte)'|';
-            index += 1;
-
-            // TYPE
-            Array.Copy(type, 0, metricBytes, index, type.Length);
-            index += type.Length;
-
-            // SAMPLE_RATE
             if (sampleRate != null && !sampleRate.SequenceEqual(MaxSampleRateBytes))
             {
-                metricBytes[index] = (byte)'|';
-                metricBytes[index + 1] = (byte)'@';
-                index += 2;
-
-                Array.Copy(sampleRate, 0, metricBytes, index, sampleRate.Length);
-                index += sampleRate.Length;
+                stream.Write(SampleRatePrefixBytes);
+                stream.Write(sampleRate);
             }
 
-            // TAGS
-            if (tags != null && tags.Length != 0)
+            if (tagsBytes != null && tagsBytes.Length != 0)
             {
-                metricBytes[index] = (byte)'|';
-                metricBytes[index + 1] = (byte)'#';
-                index += 2;
-
-                Array.Copy(tags, 0, metricBytes, index, tags.Length);
-                index += tags.Length;
+                stream.Write(TagsPrefixBytes);
+                stream.Write(tagsBytes);
             }
 
             // wrap array in a segment because ArrayPool can return a larger array than "length"
-            return new ArraySegment<byte>(metricBytes, 0, length);
+            return stream.GetBuffer();
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="alertType"></param>
-        /// <param name="title"></param>
-        /// <param name="message"></param>
-        /// <param name="priority"></param>
-        /// <param name="sourceBytes"></param>
-        /// <param name="aggregationKey"></param>
-        /// <param name="constantTagsBytes"></param>
-        /// <param name="tags"></param>
-        /// <returns></returns>
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=events</remarks>
         public static ArraySegment<byte> SerializeEvent(AlertType alertType, string title, string message, EventPriority priority,
             byte[] sourceBytes, string? aggregationKey, byte[] constantTagsBytes, IList<string>? tags)
@@ -142,75 +113,57 @@ namespace DatadogStatsD
             tags ??= Array.Empty<string>();
 
             int length = SerializedEventLength(alertType, title, message, priority, sourceBytes, aggregationKey, constantTagsBytes, tags);
-            var eventBytes = ArrayPool<byte>.Shared.Rent(length);
+            var stream = new DogStatsDStream(length);
 
-            Array.Copy(EventPrefixBytes, eventBytes, EventPrefixBytes.Length);
-            int writeIndex = EventPrefixBytes.Length;
-
+            stream.Write(EventPrefixBytes);
             // {<TITLE>.length,<TEXT>.length}:<TITLE>|<TEXT>
-            eventBytes[writeIndex] = (byte)'{';
-            writeIndex += 1;
+            stream.Write((byte)'{');
 
-            int lengthIndex = writeIndex;
-            writeIndex += EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth; // skip length part
+            int lengthStartPosition = stream.Position;
+            stream.Seek(EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth, SeekOrigin.Current);
 
-            eventBytes[writeIndex] = (byte)'}';
-            eventBytes[writeIndex + 1] = (byte)':';
-            writeIndex += 2;
-            int titleLength = Encoding.UTF8.GetBytes(title, 0, Math.Min(title.Length, EventTitleMaxLength), eventBytes, writeIndex);
-            writeIndex += titleLength;
-            eventBytes[writeIndex] = (byte)'|';
-            writeIndex += 1;
-            int messageLength = Encoding.UTF8.GetBytes(message, 0, Math.Min(message.Length, EventMessageMaxLength), eventBytes, writeIndex);
-            writeIndex += messageLength;
+            stream.Write((byte)'}');
+            stream.Write((byte)':');
+            int titleLength = stream.WriteUTF8(title, Math.Min(title.Length, EventTitleMaxLength));
+            stream.Write((byte)'|');
+            int messageLength = stream.WriteUTF8(message, Math.Min(message.Length, EventMessageMaxLength));
 
             // go back to lengthIndex to write the lengths
+            int lengthEndPosition = stream.Position;
+            stream.Seek(lengthStartPosition, SeekOrigin.Begin);
             Span<char> lengthString = stackalloc char[EventMessageMaxLengthWidth];
             titleLength.TryFormat(lengthString, out int lengthStringLength, EventTitleLengthFormat);
-            Encoding.ASCII.GetBytes(lengthString.Slice(0, lengthStringLength),
-                new Span<byte>(eventBytes, lengthIndex, EventTitleMaxLengthWidth));
-            lengthIndex += EventTitleMaxLengthWidth;
-
-            eventBytes[lengthIndex] = (byte)',';
-            lengthIndex += 1;
-
+            stream.WriteASCII(lengthString.Slice(0, lengthStringLength));
+            stream.Write((byte)',');
             messageLength.TryFormat(lengthString, out lengthStringLength, EventMessageLengthFormat);
-            Encoding.ASCII.GetBytes(lengthString.Slice(0, lengthStringLength),
-                new Span<byte>(eventBytes, lengthIndex, EventMessageMaxLengthWidth));
+            stream.WriteASCII(lengthString.Slice(0, lengthStringLength));
+            stream.Seek(lengthEndPosition, SeekOrigin.Begin);
 
             if (priority != EventPriority.Normal)
             {
-                var priorityBytes = PriorityBytes[(int)priority];
-                Array.Copy(priorityBytes, 0, eventBytes, writeIndex, priorityBytes.Length);
-                writeIndex += priorityBytes.Length;
+                stream.Write(PriorityBytes[(int)priority]);
             }
 
             if (alertType != AlertType.Info)
             {
-                var alertTypeBytes = AlertTypeBytes[(int)alertType];
-                Array.Copy(alertTypeBytes, 0, eventBytes, writeIndex, alertTypeBytes.Length);
-                writeIndex += alertTypeBytes.Length;
+                stream.Write(AlertTypeBytes[(int)alertType]);
             }
 
             if (aggregationKey != null)
             {
-                Array.Copy(AggregationKeyPrefixBytes, 0, eventBytes, writeIndex, AggregationKeyPrefixBytes.Length);
-                writeIndex += AggregationKeyPrefix.Length;
-                writeIndex += Encoding.ASCII.GetBytes(aggregationKey, 0, aggregationKey.Length, eventBytes, writeIndex);
+                stream.Write(AggregationKeyPrefixBytes);
+                stream.WriteASCII(aggregationKey);
             }
 
             if (sourceBytes.Length != 0)
             {
-                Array.Copy(SourcePrefixBytes, 0, eventBytes, writeIndex, SourcePrefixBytes.Length);
-                writeIndex += SourcePrefixBytes.Length;
-                Array.Copy(sourceBytes, 0, eventBytes, writeIndex, sourceBytes.Length);
-                writeIndex += sourceBytes.Length;
+                stream.Write(SourcePrefixBytes);
+                stream.Write(sourceBytes);
             }
 
-            writeIndex += SerializeConstantAndExtraTags(constantTagsBytes, tags, eventBytes, writeIndex);
+            WriteConstantAndExtraTags(constantTagsBytes, tags, ref stream);
 
-            // wrap array in a segment because ArrayPool can return a larger array than "length"
-            return new ArraySegment<byte>(eventBytes, 0, length);
+            return stream.GetBuffer();
         }
 
         public static ArraySegment<byte> SerializeServiceCheck(byte[] namespaceBytes, string name, CheckStatus checkStatus, string message,
@@ -301,9 +254,9 @@ namespace DatadogStatsD
             }
 
             ValidateTags(tags);
-            var tagsBytes = new byte[SerializedTagsLength(tags)];
-            SerializeTags(tags, tagsBytes, 0);
-            return tagsBytes;
+            var stream = new DogStatsDStream(new byte[SerializedTagsLength(tags)]);
+            WriteTags(tags, ref stream);
+            return stream.GetBuffer().Array;
         }
 
         private static void ValidateTags(IList<string> tags)
@@ -364,28 +317,6 @@ namespace DatadogStatsD
              WriteTags(tags, ref stream);
         }
 
-        private static int SerializeConstantAndExtraTags(byte[] constantTagsBytes, IList<string> tags, byte[] bytes, int writeIndex)
-        {
-            if (constantTagsBytes.Length == 0 && tags.Count == 0)
-            {
-                return 0;
-            }
-
-            int savedWriteIndex = writeIndex;
-            Array.Copy(TagsPrefixBytes, 0, bytes, writeIndex, TagsPrefixBytes.Length);
-            writeIndex += TagsPrefixBytes.Length;
-            Array.Copy(constantTagsBytes, 0, bytes, writeIndex, constantTagsBytes.Length);
-            writeIndex += constantTagsBytes.Length;
-            if (constantTagsBytes.Length != 0 && tags.Count != 0)
-            {
-                bytes[writeIndex] = (byte)',';
-                writeIndex += 1;
-            }
-
-            writeIndex += SerializeTags(tags, bytes, writeIndex);
-            return writeIndex - savedWriteIndex;
-        }
-
         private static void WriteTags(IList<string> tags, ref DogStatsDStream stream)
         {
             for (int i = 0; i < tags.Count; i += 1)
@@ -398,23 +329,7 @@ namespace DatadogStatsD
             }
         }
 
-        private static int SerializeTags(IList<string> tags, byte[] tagsBytes, int writeIndex)
-        {
-            int bytesWritten = 0;
-            for (int i = 0; i < tags.Count; i += 1)
-            {
-                bytesWritten += Encoding.ASCII.GetBytes(tags[i], 0, tags[i].Length, tagsBytes, writeIndex + bytesWritten);
-                if (i < tags.Count - 1)
-                {
-                    tagsBytes[writeIndex + bytesWritten] = (byte)',';
-                    bytesWritten += 1;
-                }
-            }
-
-            return bytesWritten;
-        }
-
-        private static int SerializeValue(double value, byte[] bytes, int byteIndex)
+        private static void WriteValue(double value, ref DogStatsDStream stream)
         {
             bool isValueWhole = value % 1 == 0;
             Span<char> valueChars = stackalloc char[20 + 1 + DecimalPrecision];
@@ -429,8 +344,7 @@ namespace DatadogStatsD
             }
 
             valueChars = valueChars.Slice(0, valueCharsLength);
-            var bytesSpan = new Span<byte>(bytes, byteIndex, bytes.Length - byteIndex);
-            return Encoding.ASCII.GetBytes(valueChars, bytesSpan);
+            stream.WriteASCII(valueChars);
         }
 
         private static int SerializedMetricLength(byte[] metricName, double value, byte[] type, byte[]? sampleRate, byte[] tags)
@@ -564,33 +478,77 @@ namespace DatadogStatsD
                 Position = 0;
             }
 
+            public DogStatsDStream(byte[] buffer)
+            {
+                _buffer = buffer;
+                _length = buffer.Length;
+                Position = 0;
+            }
+
             public int Position { get; private set; }
 
-            public void Write(byte b)
+            public int Write(byte b)
             {
                 _buffer[Position] = b;
                 Position += 1;
+                return 1;
             }
 
-            public void Write(byte[] buffer)
+            public int Write(byte[] buffer)
             {
                 Array.Copy(buffer, 0, _buffer, Position, buffer.Length);
                 Position += buffer.Length;
+                return buffer.Length;
             }
 
-            public void WriteASCII(string s)
+            public int WriteASCII(string s)
             {
-                Position += Encoding.ASCII.GetBytes(s, 0, s.Length, _buffer, Position);
+                return WriteASCII(s, s.Length);
             }
 
-            public void WriteUTF8(string s)
+            public int WriteASCII(string s, int count)
             {
-                Position += Encoding.UTF8.GetBytes(s, 0, s.Length, _buffer, Position);
+                int written = Encoding.ASCII.GetBytes(s, 0, count, _buffer, Position);
+                Position += written;
+                return written;
             }
 
-            public void Seek(int newPosition)
+            public int WriteASCII(Span<char> chars)
             {
-                Position = newPosition;
+                var bufferSpan = new Span<byte>(_buffer, Position, _buffer.Length - Position);
+                int written = Encoding.ASCII.GetBytes(chars, bufferSpan);
+                Position += written;
+                return written;
+            }
+
+            public int WriteUTF8(string s)
+            {
+                return WriteUTF8(s, s.Length);
+            }
+
+            public int WriteUTF8(string s, int count)
+            {
+                int written = Encoding.UTF8.GetBytes(s, 0, count, _buffer, Position);
+                Position += written;
+                return written;
+            }
+
+            public void Seek(int offset, SeekOrigin loc)
+            {
+                switch (loc)
+                {
+                    case SeekOrigin.Begin:
+                        Position = offset;
+                        break;
+                    case SeekOrigin.Current:
+                        Position += offset;
+                        break;
+                    case SeekOrigin.End:
+                        Position = _length - offset;
+                        break;
+                    default:
+                        throw new ArgumentException();
+                }
             }
 
             public ArraySegment<byte> GetBuffer()
