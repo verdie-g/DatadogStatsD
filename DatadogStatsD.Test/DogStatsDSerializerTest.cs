@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Text;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
+using DatadogStatsD.ServiceChecks;
 using NUnit.Framework;
 
 namespace DatadogStatsD.Test
@@ -68,6 +69,28 @@ namespace DatadogStatsD.Test
             string eventStr = Encoding.UTF8.GetString(eventBytes);
             Assert.AreEqual(expected, eventStr);
             ArrayPool<byte>.Shared.Return(eventBytes.Array);
+        }
+
+        [TestCase(null, "cd", CheckStatus.Ok, null, null, null, "_sc|cd|0")]
+        [TestCase("ab", "cd", CheckStatus.Ok, null, null, null, "_sc|ab.cd|0")]
+        [TestCase(null, "cd", CheckStatus.Warning, null, null, null, "_sc|cd|1")]
+        [TestCase(null, "cd", CheckStatus.Critical, null, null, null, "_sc|cd|2")]
+        [TestCase(null, "cd", CheckStatus.Unknown, null, null, null, "_sc|cd|3")]
+        [TestCase(null, "cd", CheckStatus.Ok, "é ä ù", null, null, "_sc|cd|0|m:é ä ù")]
+        [TestCase(null, "cd", CheckStatus.Ok, null, "ef,gh", null, "_sc|cd|0|#ef,gh")]
+        [TestCase(null, "cd", CheckStatus.Ok, null, null, "ij,kl", "_sc|cd|0|#ij,kl")]
+        [TestCase("ab", "cd", CheckStatus.Ok, "aaa", "ef,gh", "ij,kl", "_sc|ab.cd|0|#ef,gh,ij,kl|m:aaa")]
+        public void SerializeServiceCheck(string ns, string name, CheckStatus checkStatus, string message, string constantTags,
+            string extraTags, string expected)
+        {
+            byte[] nsBytes = ns != null ? Encoding.ASCII.GetBytes(ns) : Array.Empty<byte>();
+            message ??= string.Empty;
+            byte[] constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(constantTags?.Split(','));
+            string[] extraTagsList = extraTags?.Split(',');
+            var serviceCheckBytes = DogStatsDSerializer.SerializeServiceCheck(nsBytes, name, checkStatus, message, constantTagsBytes, extraTagsList);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            Assert.AreEqual(expected, serviceCheckStr);
+            ArrayPool<byte>.Shared.Return(serviceCheckBytes.Array);
         }
 
         [TestCase(null)]

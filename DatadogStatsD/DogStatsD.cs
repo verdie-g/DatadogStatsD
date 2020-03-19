@@ -4,6 +4,7 @@ using System.Linq;
 using System.Timers;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
+using DatadogStatsD.ServiceChecks;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD
@@ -26,6 +27,7 @@ namespace DatadogStatsD
         private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
 
         private readonly DogStatsDConfiguration _conf;
+        private readonly byte[] _namespaceBytes;
         private readonly byte[] _sourceBytes;
         private readonly byte[] _constantTagsBytes;
         private readonly ITransport _transport;
@@ -38,6 +40,7 @@ namespace DatadogStatsD
         public DogStatsD(DogStatsDConfiguration conf)
         {
             _conf = conf;
+            _namespaceBytes = conf.Namespace != null ? DogStatsDSerializer.SerializeMetricName(conf.Namespace) : Array.Empty<byte>();
             _sourceBytes = DogStatsDSerializer.SerializeSource(_conf.Source);
             _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(_conf.ConstantTags);
 
@@ -128,12 +131,25 @@ namespace DatadogStatsD
         /// An arbitrary string to use for aggregation. Limited to 100 characters. If you specify a key, all events
         /// using that key are grouped together in the Event Stream.
         /// </param>
-        /// <param name="tags">A list of tags to apply to the event. They are append to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
+        /// <param name="tags">A list of tags to apply to the event. They are appended to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public void RaiseEvent(AlertType alertType, string title, string message, Priority priority = Priority.Normal,
             string? aggregationKey = null, IList<string>? tags = null)
         {
             _transport.Send(DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, _sourceBytes,
                 aggregationKey, _constantTagsBytes, tags));
+        }
+
+        /// <summary>
+        /// Send a service check.
+        /// </summary>
+        /// <param name="name">The service check name. <see cref="DogStatsDConfiguration.Namespace"/> is prepended to it.</param>
+        /// <param name="checkStatus">The check status.</param>
+        /// <param name="message">A message describing the current state of the service check.</param>
+        /// <param name="tags">A list of tags to apply to the service check. They are appended to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
+        public void SendServiceCheck(string name, CheckStatus checkStatus, string message = "", IList<string>? tags = null)
+        {
+            _transport.Send(DogStatsDSerializer.SerializeServiceCheck(_namespaceBytes, name, checkStatus, message,
+                _constantTagsBytes, tags));
         }
 
         public void Dispose()

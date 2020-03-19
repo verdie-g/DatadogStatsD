@@ -26,7 +26,7 @@ namespace DatadogStatsD
         public IList<string>? ConstantTags { get; set; }
 
         /// <summary>
-        /// Namespace to prefix all metrics.
+        /// Namespace to prefix all metrics, and service checks.
         /// </summary>
         public string? Namespace { get; set; }
 

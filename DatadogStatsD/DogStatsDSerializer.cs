@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
+using DatadogStatsD.ServiceChecks;
 
 namespace DatadogStatsD
 {
@@ -24,13 +25,19 @@ namespace DatadogStatsD
         private static readonly int EventMessageMaxLengthWidth = IntegerWidth(EventMessageMaxLength);
         private static readonly string EventMessageLengthFormat = GenerateIntegerFormat(EventMessageMaxLengthWidth);
 
+        private const string EventPrefix = "_e";
+        private const string ServiceCheckPrefix = "_sc";
         private const string AlertTypePrefix = "|t:";
         private const string PriorityPrefix = "|p:";
         private const string AggregationKeyPrefix = "|k:";
         private const string SourcePrefix = "|s:";
+        private const string ServiceCheckMessagePrefix = "|m:";
         private const string TagsPrefix  = "|#";
+        private static readonly byte[] EventPrefixBytes = Encoding.ASCII.GetBytes(EventPrefix);
+        private static readonly byte[] ServiceCheckPrefixBytes = Encoding.ASCII.GetBytes(ServiceCheckPrefix);
         private static readonly byte[] AggregationKeyPrefixBytes = Encoding.ASCII.GetBytes(AggregationKeyPrefix);
         private static readonly byte[] SourcePrefixBytes = Encoding.ASCII.GetBytes(SourcePrefix);
+        private static readonly byte[] ServiceCheckMessagePrefixBytes = Encoding.ASCII.GetBytes(ServiceCheckMessagePrefix);
         private static readonly byte[] TagsPrefixBytes = Encoding.ASCII.GetBytes(TagsPrefix);
 
         private static readonly byte[][] MetricTypeBytes =
@@ -137,10 +144,8 @@ namespace DatadogStatsD
             int length = SerializedEventLength(alertType, title, message, priority, sourceBytes, aggregationKey, constantTagsBytes, tags);
             var eventBytes = ArrayPool<byte>.Shared.Rent(length);
 
-            int writeIndex = 0;
-            eventBytes[0] = (byte)'_';
-            eventBytes[1] = (byte)'e';
-            writeIndex += 2;
+            Array.Copy(EventPrefixBytes, eventBytes, EventPrefixBytes.Length);
+            int writeIndex = EventPrefixBytes.Length;
 
             // {<TITLE>.length,<TEXT>.length}:<TITLE>|<TEXT>
             eventBytes[writeIndex] = (byte)'{';
@@ -202,23 +207,40 @@ namespace DatadogStatsD
                 writeIndex += sourceBytes.Length;
             }
 
-            if (constantTagsBytes.Length != 0 || tags.Count != 0)
-            {
-                Array.Copy(TagsPrefixBytes, 0, eventBytes, writeIndex, TagsPrefixBytes.Length);
-                writeIndex += TagsPrefixBytes.Length;
-                Array.Copy(constantTagsBytes, 0, eventBytes, writeIndex, constantTagsBytes.Length);
-                writeIndex += constantTagsBytes.Length;
-                if (constantTagsBytes.Length != 0 && tags.Count != 0)
-                {
-                    eventBytes[writeIndex] = (byte)',';
-                    writeIndex += 1;
-                }
-
-                writeIndex += SerializeTags(tags, eventBytes, writeIndex);
-            }
+            writeIndex += SerializeConstantAndExtraTags(constantTagsBytes, tags, eventBytes, writeIndex);
 
             // wrap array in a segment because ArrayPool can return a larger array than "length"
             return new ArraySegment<byte>(eventBytes, 0, length);
+        }
+
+        public static ArraySegment<byte> SerializeServiceCheck(byte[] namespaceBytes, string name, CheckStatus checkStatus, string message,
+            byte[] constantTagsBytes, IList<string>? extraTags)
+        {
+            extraTags ??= Array.Empty<string>();
+
+            int length = SerializedServiceCheckLength(namespaceBytes, name, message, constantTagsBytes, extraTags);
+            var stream = new DogStatsDStream(length);
+
+            // _sc|<NAMESPACE>.<NAME>|<STATUS>|#<TAG_KEY_1>:<TAG_VALUE_1>,<TAG_2>|m:<SERVICE_CHECK_MESSAGE>
+            stream.Write(ServiceCheckPrefixBytes);
+            stream.Write((byte)'|');
+            if (namespaceBytes.Length != 0)
+            {
+                stream.Write(namespaceBytes);
+                stream.Write((byte)'.');
+            }
+
+            stream.WriteASCII(name);
+            stream.Write((byte)'|');
+            stream.Write((byte)((byte)checkStatus + (byte)'0'));
+            WriteConstantAndExtraTags(constantTagsBytes, extraTags, ref stream);
+            if (message.Length != 0)
+            {
+                stream.Write(ServiceCheckMessagePrefixBytes);
+                stream.WriteUTF8(message);
+            }
+
+            return stream.GetBuffer();
         }
 
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics</remarks>
@@ -324,6 +346,58 @@ namespace DatadogStatsD
             }
         }
 
+        private static void WriteConstantAndExtraTags(byte[] constantTagsBytes, IList<string> tags,
+            ref DogStatsDStream stream)
+        {
+             if (constantTagsBytes.Length == 0 && tags.Count == 0)
+             {
+                 return;
+             }
+
+             stream.Write(TagsPrefixBytes);
+             stream.Write(constantTagsBytes);
+             if (constantTagsBytes.Length != 0 && tags.Count != 0)
+             {
+                 stream.Write((byte)',');
+             }
+
+             WriteTags(tags, ref stream);
+        }
+
+        private static int SerializeConstantAndExtraTags(byte[] constantTagsBytes, IList<string> tags, byte[] bytes, int writeIndex)
+        {
+            if (constantTagsBytes.Length == 0 && tags.Count == 0)
+            {
+                return 0;
+            }
+
+            int savedWriteIndex = writeIndex;
+            Array.Copy(TagsPrefixBytes, 0, bytes, writeIndex, TagsPrefixBytes.Length);
+            writeIndex += TagsPrefixBytes.Length;
+            Array.Copy(constantTagsBytes, 0, bytes, writeIndex, constantTagsBytes.Length);
+            writeIndex += constantTagsBytes.Length;
+            if (constantTagsBytes.Length != 0 && tags.Count != 0)
+            {
+                bytes[writeIndex] = (byte)',';
+                writeIndex += 1;
+            }
+
+            writeIndex += SerializeTags(tags, bytes, writeIndex);
+            return writeIndex - savedWriteIndex;
+        }
+
+        private static void WriteTags(IList<string> tags, ref DogStatsDStream stream)
+        {
+            for (int i = 0; i < tags.Count; i += 1)
+            {
+                stream.WriteASCII(tags[i]);
+                if (i < tags.Count - 1)
+                {
+                    stream.Write((byte)',');
+                }
+            }
+        }
+
         private static int SerializeTags(IList<string> tags, byte[] tagsBytes, int writeIndex)
         {
             int bytesWritten = 0;
@@ -377,10 +451,10 @@ namespace DatadogStatsD
         }
 
         private static int SerializedEventLength(AlertType alertType, string title, string message, Priority priority,
-            byte[] source, string? aggregationKey, byte[] constantTags, IList<string> tags)
+            byte[] source, string? aggregationKey, byte[] constantTagsBytes, IList<string> extraTags)
         {
             // _e{<TITLE>.length,<TEXT>.length}:<TITLE>|<TEXT>
-            int length = 3 + EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth + 2
+            int length = EventPrefixBytes.Length + 1 + EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth + 2
                        + Encoding.UTF8.GetByteCount(title) + 1 + Encoding.UTF8.GetByteCount(message);
 
             if (priority != Priority.Normal)
@@ -403,17 +477,28 @@ namespace DatadogStatsD
                 length += SourcePrefixBytes.Length + source.Length;
             }
 
-            if (constantTags.Length != 0 || tags.Count != 0)
+            length += SerializedConstantAndExtraTagsLength(constantTagsBytes, extraTags);
+
+            return length;
+        }
+
+        private static int SerializedServiceCheckLength(byte[] namespaceBytes, string name, string message,
+            byte[] constantTagsBytes, IList<string> extraTags)
+        {
+            // _sc|<NAMESPACE>.<NAME>|<STATUS>|#<TAG_KEY_1>:<TAG_VALUE_1>,<TAG_2>|m:<SERVICE_CHECK_MESSAGE>
+            int length = ServiceCheckPrefixBytes.Length + 1;
+            if (namespaceBytes.Length != 0)
             {
-                length += TagsPrefixBytes.Length;
+                length += namespaceBytes.Length + 1;
             }
 
-            if (constantTags.Length != 0 && tags.Count != 0)
-            {
-                length += 1; // for comma
-            }
+            length += Encoding.ASCII.GetByteCount(name) + TagsPrefixBytes.Length +
+                      SerializedConstantAndExtraTagsLength(constantTagsBytes, extraTags);
 
-            length += constantTags.Length + SerializedTagsLength(tags);
+            if (message.Length != 0)
+            {
+                length += ServiceCheckMessagePrefix.Length + Encoding.UTF8.GetByteCount(message);
+            }
 
             return length;
         }
@@ -425,6 +510,22 @@ namespace DatadogStatsD
             long wholePart = (long)value;
 
             return (wholePart == 0 ? signLength + 1 : IntegerWidth(wholePart)) + (isWhole ? 0 : 1 + DecimalPrecision); // '.000000'
+        }
+
+        private static int SerializedConstantAndExtraTagsLength(byte[] constantTagsBytes, IList<string> extraTags)
+        {
+            int length = 0;
+            if (constantTagsBytes.Length != 0 || extraTags.Count != 0)
+            {
+                length += TagsPrefixBytes.Length;
+            }
+
+            if (constantTagsBytes.Length != 0 && extraTags.Count != 0)
+            {
+                length += 1; // for comma
+            }
+
+            return length + constantTagsBytes.Length + SerializedTagsLength(extraTags);
         }
 
         private static int SerializedTagsLength(IList<string> tags)
@@ -449,6 +550,53 @@ namespace DatadogStatsD
         private static string GenerateIntegerFormat(int width)
         {
             return string.Create<object?>(width, null, (chars, _) => chars.Fill('0'));
+        }
+
+        private struct DogStatsDStream
+        {
+            private readonly byte[] _buffer;
+            private readonly int _length;
+
+            public DogStatsDStream(int length)
+            {
+                _buffer = ArrayPool<byte>.Shared.Rent(length);
+                _length = length;
+                Position = 0;
+            }
+
+            public int Position { get; private set; }
+
+            public void Write(byte b)
+            {
+                _buffer[Position] = b;
+                Position += 1;
+            }
+
+            public void Write(byte[] buffer)
+            {
+                Array.Copy(buffer, 0, _buffer, Position, buffer.Length);
+                Position += buffer.Length;
+            }
+
+            public void WriteASCII(string s)
+            {
+                Position += Encoding.ASCII.GetBytes(s, 0, s.Length, _buffer, Position);
+            }
+
+            public void WriteUTF8(string s)
+            {
+                Position += Encoding.UTF8.GetBytes(s, 0, s.Length, _buffer, Position);
+            }
+
+            public void Seek(int newPosition)
+            {
+                Position = newPosition;
+            }
+
+            public ArraySegment<byte> GetBuffer()
+            {
+                return new ArraySegment<byte>(_buffer, 0, _length);
+            }
         }
     }
 }
