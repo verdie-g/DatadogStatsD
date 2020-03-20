@@ -16,24 +16,26 @@ namespace DatadogStatsD.Test
         [TestCase("foo", 1.0, MetricType.Histogram, null, null, "foo:1|h")]
         [TestCase("foo", 1.0, MetricType.Set, null, null, "foo:1|s")]
         [TestCase("foo", -1.0, MetricType.Count, null, null, "foo:-1|c")]
+        [TestCase("foo", 9007199254740992, MetricType.Count, null, null, "foo:9007199254740992|c")]
         [TestCase("foo", 1.0, MetricType.Count, 1.0, null, "foo:1|c")]
-        [TestCase("foo", 1.0, MetricType.Count, 0.100000, null, "foo:1|c|@0.100000")]
-        [TestCase("foo", 1.0, MetricType.Count, 0.010000, null, "foo:1|c|@0.010000")]
-        [TestCase("foo", 1.0, MetricType.Count, 0.001000, null, "foo:1|c|@0.001000")]
-        [TestCase("foo", 1.0, MetricType.Count, 0.000100, null, "foo:1|c|@0.000100")]
-        [TestCase("foo", 1.0, MetricType.Count, 0.000010, null, "foo:1|c|@0.000010")]
-        [TestCase("foo", 1.0, MetricType.Count, 0.000001, null, "foo:1|c|@0.000001")]
+        [TestCase("foo", 1.0, MetricType.Count, 0.1, null, "foo:1|c|@0.1")]
+        [TestCase("foo", 1.0, MetricType.Count, 0.01, null, "foo:1|c|@0.01")]
+        [TestCase("foo", 1.0, MetricType.Count, 0.001, null, "foo:1|c|@0.001")]
+        [TestCase("foo", 1.0, MetricType.Count, 0.0001, null, "foo:1|c|@0.0001")]
+        [TestCase("foo", 1.0, MetricType.Count, 0.00001, null, "foo:1|c|@1E-05")]
+        [TestCase("foo", 1.0, MetricType.Count, 0.000001, null, "foo:1|c|@1E-06")]
         [TestCase("foo", 1.0, MetricType.Count, null, "a,b:c,d", "foo:1|c|#a,b:c,d")]
-        [TestCase("foo", 0001.0, MetricType.Histogram, null, null, "foo:1|h")]
-        [TestCase("foo", 0012.0, MetricType.Histogram, null, null, "foo:12|h")]
-        [TestCase("foo", 0123.0, MetricType.Histogram, null, null, "foo:123|h")]
+        [TestCase("foo", 1.0, MetricType.Histogram, null, null, "foo:1|h")]
+        [TestCase("foo", 12.0, MetricType.Histogram, null, null, "foo:12|h")]
+        [TestCase("foo", 123.0, MetricType.Histogram, null, null, "foo:123|h")]
         [TestCase("foo", 1234.0, MetricType.Histogram, null, null, "foo:1234|h")]
-        [TestCase("foo", 0.100000, MetricType.Histogram, null, null, "foo:0.100000|h")]
-        [TestCase("foo", 0.120000, MetricType.Histogram, null, null, "foo:0.120000|h")]
-        [TestCase("foo", 0.123000, MetricType.Histogram, null, null, "foo:0.123000|h")]
-        [TestCase("foo", 0.123400, MetricType.Histogram, null, null, "foo:0.123400|h")]
-        [TestCase("foo", 0.123450, MetricType.Histogram, null, null, "foo:0.123450|h")]
+        [TestCase("foo", 0.1, MetricType.Histogram, null, null, "foo:0.1|h")]
+        [TestCase("foo", 0.12, MetricType.Histogram, null, null, "foo:0.12|h")]
+        [TestCase("foo", 0.123, MetricType.Histogram, null, null, "foo:0.123|h")]
+        [TestCase("foo", 0.1234, MetricType.Histogram, null, null, "foo:0.1234|h")]
+        [TestCase("foo", 0.12345, MetricType.Histogram, null, null, "foo:0.12345|h")]
         [TestCase("foo", 0.123456, MetricType.Histogram, null, null, "foo:0.123456|h")]
+        [TestCase("foo", -1.123456789E-7, MetricType.Histogram, null, null, "foo:-1.123456789E-07|h")]
         [TestCase("foo.bar_lol", -123456.789012, MetricType.Gauge, 0.123456, "a:b,cdef,fg:hij", "foo.bar_lol:-123456.789012|g|@0.123456|#a:b,cdef,fg:hij")]
         public void SerializeMetric(string name, double value, MetricType type, double? sampleRate, string tags,
             string expected)
@@ -112,9 +114,8 @@ namespace DatadogStatsD.Test
             Assert.Throws<IndexOutOfRangeException>(() => DogStatsDSerializer.SerializeMetricType(type));
         }
 
-        [TestCase(0.0000001)]
-        [TestCase(1.0000001)]
-        [TestCase(10)]
+        [TestCase(-0.5)]
+        [TestCase(1.5)]
         public void SerializeSampleRateArgumentException(double sampleRate)
         {
             Assert.Throws<ArgumentException>(() => DogStatsDSerializer.SerializeSampleRate(sampleRate));

@@ -15,7 +15,7 @@ namespace DatadogStatsD
     {
         private const int MetricNameMaxLength = 200;
         private const int TagMaxLength = 200;
-        private const int DecimalPrecision = 6;
+        private static readonly int SerializedValueMaxLength = double.MinValue.ToString(CultureInfo.InvariantCulture).Length;
         private static readonly byte[] MaxSampleRateBytes = SerializeSampleRate(1.0);
 
         private const int EventTitleMaxLength = 100;
@@ -79,7 +79,7 @@ namespace DatadogStatsD
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics</remarks>
         public static ArraySegment<byte> SerializeMetric(byte[] metricNameBytes, double value, byte[] typeBytes, byte[]? sampleRate, byte[] tagsBytes)
         {
-            int length = SerializedMetricLength(metricNameBytes, value, typeBytes, sampleRate, tagsBytes);
+            int length = SerializedMetricLength(metricNameBytes, typeBytes, sampleRate, tagsBytes);
             var stream = new DogStatsDStream(length);
 
             // <METRIC_NAME>:<VALUE>|<TYPE>|@<SAMPLE_RATE>|#<TAGS>
@@ -232,13 +232,12 @@ namespace DatadogStatsD
 
         public static byte[] SerializeSampleRate(double sampleRate)
         {
-            double min = Math.Pow(10, -DecimalPrecision);
-            if (sampleRate < min || sampleRate > 1.0)
+            if (sampleRate < 0.0 || sampleRate > 1.0)
             {
-                throw new ArgumentException($"Sample rate must be included between {min} and {1.0}", nameof(sampleRate));
+                throw new ArgumentException("Sample rate must be included between 0 and 1", nameof(sampleRate));
             }
 
-            return Encoding.ASCII.GetBytes($"{sampleRate:0.000000}");
+            return Encoding.ASCII.GetBytes(sampleRate.ToString(CultureInfo.InvariantCulture));
         }
 
         public static byte[] SerializeSource(string? source)
@@ -331,8 +330,8 @@ namespace DatadogStatsD
 
         private static void WriteValue(double value, ref DogStatsDStream stream)
         {
-            bool isValueWhole = value % 1 == 0;
-            Span<char> valueChars = stackalloc char[20 + 1 + DecimalPrecision];
+            bool isValueWhole = Math.Round(value) == value;
+            Span<char> valueChars = stackalloc char[SerializedValueMaxLength];
             int valueCharsLength;
             if (isValueWhole)
             {
@@ -340,16 +339,16 @@ namespace DatadogStatsD
             }
             else
             {
-                value.TryFormat(valueChars, out valueCharsLength, "0.000000", CultureInfo.InvariantCulture);
+                value.TryFormat(valueChars, out valueCharsLength, "G", CultureInfo.InvariantCulture);
             }
 
             valueChars = valueChars.Slice(0, valueCharsLength);
             stream.WriteASCII(valueChars);
         }
 
-        private static int SerializedMetricLength(byte[] metricName, double value, byte[] type, byte[]? sampleRate, byte[] tags)
+        private static int SerializedMetricLength(byte[] metricName, byte[] type, byte[]? sampleRate, byte[] tags)
         {
-            int length = metricName.Length + 1 + SerializedValueLength(value) + 1 + type.Length; // ':' + '|'
+            int length = metricName.Length + 1 + SerializedValueMaxLength + 1 + type.Length; // ':' + '|'
 
             if (sampleRate != null && !sampleRate.SequenceEqual(MaxSampleRateBytes))
             {
@@ -416,15 +415,6 @@ namespace DatadogStatsD
             }
 
             return length;
-        }
-
-        private static int SerializedValueLength(double value)
-        {
-            int signLength = value < 0 ? 1 : 0;
-            bool isWhole = value % 1 == 0;
-            long wholePart = (long)value;
-
-            return (wholePart == 0 ? signLength + 1 : IntegerWidth(wholePart)) + (isWhole ? 0 : 1 + DecimalPrecision); // '.000000'
         }
 
         private static int SerializedConstantAndExtraTagsLength(byte[] constantTagsBytes, IList<string> extraTags)
@@ -554,7 +544,7 @@ namespace DatadogStatsD
 
             public ArraySegment<byte> GetBuffer()
             {
-                return new ArraySegment<byte>(_buffer, 0, _length);
+                return new ArraySegment<byte>(_buffer, 0, Position);
             }
         }
     }
