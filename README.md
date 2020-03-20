@@ -8,8 +8,12 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
 - **Back pressure** - Transport drops new metrics when it's falling behind
 - [**Telemetry**](https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?tab=go#client-side-telemetry) -
   Metrics are sent to troubleshoot dropped metrics
+  
+## Install
 
-# Examples
+`dotnet add package DatadogStatsD`
+
+## Examples
 
 ```csharp
 using var dogStatsD = new DogStatsD();
@@ -26,13 +30,13 @@ dogStasD.RaiseEvent(AlertType.Info, "Bad thing happened", "This happened");
 dogStasD.SendServiceCheck("is_connected", CheckStatus.Ok);
 ```
 
-# Benchmark
+## Benchmark
 
 Benchmark comparing performance of this library with [neuecc/DatadogSharp](https://github.com/neuecc/DatadogSharp)
 and [DataDog/dogstatsd-csharp-client](https://github.com/DataDog/dogstatsd-csharp-client). Sources can be found in
 [DatadogStatsD.Benchmark](https://github.com/verdie-g/DatadogStatsD/blob/master/DatadogStatsD.Benchmark/Program.cs).
 
-# Count & Gauge
+### Count & Gauge
 
 ```
 |        Method |     Op |           Mean |         Error |        StdDev |      Gen 0 | Gen 1 | Gen 2 |  Allocated |
@@ -51,7 +55,7 @@ and [DataDog/dogstatsd-csharp-client](https://github.com/DataDog/dogstatsd-cshar
 This library aggregates for 10 seconds ([DogStatsD flush interval](https://docs.datadoghq.com/developers/dogstatsd/data_aggregation/#how-is-aggregation-performed-with-the-dogstatsd-server))
 counts and gauges, so for 10000 increments, one packet is sent, hence the ~0 bytes allocated.
 
-# Histogram, Set, Distribution
+### Histogram, Set, Distribution
 
 ```
 |        Method |     Op |       Mean |     Error |    StdDev |     Median |      Gen 0 | Gen 1 | Gen 2 |   Allocated |
