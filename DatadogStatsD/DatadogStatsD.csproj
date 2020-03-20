@@ -6,6 +6,7 @@
     <Description>High Performance DogStatsD Client</Description>
     <Authors>Grégoire Verdier</Authors>
     <PackageTags>Datadog;DogStatsD</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/verdie-g/DatadogStatsD</RepositoryUrl>
     <Nullable>enable</Nullable>
     <!-- Treat non-nullable type warnings as errors -->
