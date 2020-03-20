@@ -13,7 +13,7 @@ namespace DatadogStatsD
         /// <summary>
         /// The port of your DogStatsD server. Defaults to 8125.
         /// </summary>
-        public int? Port { get; set; } = 8125;
+        public int Port { get; set; } = 8125;
 
         /// <summary>
         /// The path to the DogStatsD Unix domain socket (overrides <see cref="Host"/> and <see cref="Port"/>).

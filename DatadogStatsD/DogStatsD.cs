@@ -49,9 +49,7 @@ namespace DatadogStatsD
             string transportName;
             if (conf.UnixSocketPath == null)
             {
-                socket = new UdpSocket(
-                    _conf.Host ?? DefaultConfiguration.Host,
-                    _conf.Port ?? DefaultConfiguration.Port!.Value);
+                socket = new UdpSocket(_conf.Host ?? DefaultConfiguration.Host, _conf.Port);
                 maxBufferingSize = UdpPayloadSize;
                 transportName = UdpName;
             }
