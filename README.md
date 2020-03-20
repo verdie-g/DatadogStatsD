@@ -1,15 +1,21 @@
 # DatadogStatsD
 Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) client:
-- Count, Histogram, Gauge, Distribution, Set
-- Events
-- Service Checks
-- **UDP** or **UDS** transport
+- [Count](https://docs.datadoghq.com/developers/metrics/types/?tab=count#metric-types),
+  [Histogram](https://docs.datadoghq.com/developers/metrics/types/?tab=count#metric-types),
+  [Gauge](https://docs.datadoghq.com/developers/metrics/types/?tab=gauge#metric-types),
+  [Distribution](https://docs.datadoghq.com/developers/metrics/types/?tab=distribution#metric-types),
+  [Set](https://statsd.readthedocs.io/en/v3.2.1/types.html#sets)
+- [Events](https://docs.datadoghq.com/events)
+- [Service Checks](https://docs.datadoghq.com/developers/service_checks)
+- [**UDP**](https://docs.datadoghq.com/developers/dogstatsd/?tab=hostagent#how-it-works) or
+  [**UDS**](https://docs.datadoghq.com/developers/dogstatsd/unix_socket) transport
 - **Performance** - Metrics are aggregated and the submissions are batched
 - **Back pressure** - Transport drops new metrics when it's falling behind
 - [**Telemetry**](https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?tab=go#client-side-telemetry) -
-  Metrics are sent to troubleshoot dropped metrics
+  Metrics to monitor communication between the agent and this client
   
-## Install
+## Installation
+[DatadogStatsD](https://www.nuget.org/packages/DatadogStatsD) targets .NET Standard 2.1.
 
 `dotnet add package DatadogStatsD`
 
@@ -18,17 +24,22 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
 ```csharp
 using var dogStatsD = new DogStatsD();
 
-using var exampleMetric = dogStatsD.CreateCount("example_metric", 1.0, new[] { "environment:dev" });
+using var requests = dogStatsD.CreateCount("requests", new[] { "environment:dev" });
 exampleMetric.Increment();
 exampleMetric.Decrement();
 
-using var exampleMetric2 = dogStatsD.CreateHistogram("example_metric2");
+using var latency = dogStatsD.CreateHistogram("latency", sampleRate: 0.5);
 exampleMetric2.Record(5.423);
 exampleMetric2.Record(1.27);
+
+using var threads = dogStatsD.CreateGauge("threads", () => Process.GetCurrentProcess().Threads.Count);
 
 dogStasD.RaiseEvent(AlertType.Info, "Bad thing happened", "This happened");
 dogStasD.SendServiceCheck("is_connected", CheckStatus.Ok);
 ```
+
+See [DogStatsDConfiguration.cs](https://github.com/verdie-g/DatadogStatsD/blob/master/DatadogStatsD/DogStatsDConfiguration.cs)
+to configure the client.
 
 ## Benchmark
 
