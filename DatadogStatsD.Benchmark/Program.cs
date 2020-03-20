@@ -119,7 +119,7 @@ namespace DatadogStatsD.Benchmark
             {
                 for (int i = 0; i < Op; i += 1)
                 {
-                    _datadogStatsD.Update(i);
+                    _datadogStatsD.Record(i);
                 }
             }
 

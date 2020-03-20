@@ -45,7 +45,7 @@ namespace DatadogStatsD.Sample
                 }
 
                 await Task.Delay(delay);
-                hist.Update(sw.ElapsedMilliseconds);
+                hist.Record(sw.ElapsedMilliseconds);
                 set.Add(i % 2);
                 distribution.Record(i % 10);
             }

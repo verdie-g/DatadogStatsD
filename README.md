@@ -19,8 +19,8 @@ exampleMetric.Increment();
 exampleMetric.Decrement();
 
 using var exampleMetric2 = dogStatsD.CreateHistogram("example_metric2");
-exampleMetric2.Update(5.423);
-exampleMetric2.Update(1.27);
+exampleMetric2.Record(5.423);
+exampleMetric2.Record(1.27);
 
 dogStasD.RaiseEvent(AlertType.Info, "Bad thing happened", "This happened");
 dogStasD.SendServiceCheck("is_connected", CheckStatus.Ok);
