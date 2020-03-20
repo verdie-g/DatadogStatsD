@@ -135,6 +135,7 @@ namespace DatadogStatsD
         public void RaiseEvent(AlertType alertType, string title, string message, EventPriority priority = EventPriority.Normal,
             string? aggregationKey = null, IList<string>? tags = null)
         {
+            _telemetry.EventSent();
             _transport.Send(DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, _sourceBytes,
                 aggregationKey, _constantTagsBytes, tags));
         }
@@ -148,6 +149,7 @@ namespace DatadogStatsD
         /// <param name="tags">A list of tags to apply to the service check. They are appended to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public void SendServiceCheck(string name, CheckStatus checkStatus, string message = "", IList<string>? tags = null)
         {
+            _telemetry.ServiceCheckSent();
             _transport.Send(DogStatsDSerializer.SerializeServiceCheck(_namespaceBytes, name, checkStatus, message,
                 _constantTagsBytes, tags));
         }
