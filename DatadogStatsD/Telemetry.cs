@@ -19,6 +19,7 @@ namespace DatadogStatsD
     /// <remarks>https://docs.datadoghq.com/developers/dogstatsd/high_throughput#client-side-telemetry</remarks>
     internal class Telemetry : ITelemetry
     {
+        private const string MetricPrefix = "datadog.dogstatsd.client.";
         private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(10);
 
         private const string ClientTag = "client:cs";
@@ -89,17 +90,17 @@ namespace DatadogStatsD
                 ClientTransportKey + ":" + transportName,
             };
 
-             _metricsCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.metrics", tags);
-             _eventsCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.events", tags);
-             _serviceChecksCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.service_checks", tags);
-             _bytesSentCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_sent", tags);
-             _bytesDroppedCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_dropped", tags);
-             _bytesDroppedQueueCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_dropped_queue", tags);
-             _bytesDroppedWriterCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.bytes_dropped_writer", tags);
-             _packetsSentCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_sent", tags);
-             _packetsDroppedCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_dropped", tags);
-             _packetsDroppedQueueCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_dropped_queue", tags);
-             _packetsDroppedWriterCount = new Count(transport, this, tickTimer, "datadog.dogstatsd.client.packets_dropped_writer", tags);
+             _metricsCount = new Count(transport, this, tickTimer, MetricPrefix + "metrics", tags);
+             _eventsCount = new Count(transport, this, tickTimer, MetricPrefix + "events", tags);
+             _serviceChecksCount = new Count(transport, this, tickTimer, MetricPrefix + "service_checks", tags);
+             _bytesSentCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_sent", tags);
+             _bytesDroppedCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_dropped", tags);
+             _bytesDroppedQueueCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_dropped_queue", tags);
+             _bytesDroppedWriterCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_dropped_writer", tags);
+             _packetsSentCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_sent", tags);
+             _packetsDroppedCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_dropped", tags);
+             _packetsDroppedQueueCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_dropped_queue", tags);
+             _packetsDroppedWriterCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_dropped_writer", tags);
         }
 
         public void MetricSent() => _metricsCount.Increment();
