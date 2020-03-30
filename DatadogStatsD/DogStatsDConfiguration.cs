@@ -34,10 +34,5 @@ namespace DatadogStatsD
         /// Enabled telemetry. Defaults to true.
         /// </summary>
         public bool Telemetry { get; set; } = true;
-
-        /// <summary>
-        /// Source to use for events.
-        /// </summary>
-        public string? Source { get; set; }
     }
 }

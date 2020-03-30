@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Timers;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
@@ -25,10 +26,10 @@ namespace DatadogStatsD
         // https://docs.datadoghq.com/developers/dogstatsd/data_aggregation#how-is-aggregation-performed-with-the-dogstatsd-server
         private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10);
         private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
+        private static readonly byte[] SourceBytes = Encoding.ASCII.GetBytes("csharp");
 
         private readonly DogStatsDConfiguration _conf;
         private readonly byte[] _namespaceBytes;
-        private readonly byte[] _sourceBytes;
         private readonly byte[] _constantTagsBytes;
         private readonly ITransport _transport;
         private readonly ITelemetry _telemetry;
@@ -41,7 +42,6 @@ namespace DatadogStatsD
         {
             _conf = conf;
             _namespaceBytes = conf.Namespace != null ? DogStatsDSerializer.SerializeMetricName(conf.Namespace) : Array.Empty<byte>();
-            _sourceBytes = DogStatsDSerializer.SerializeSource(_conf.Source);
             _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(_conf.ConstantTags);
 
             ISocket socket;
@@ -119,7 +119,7 @@ namespace DatadogStatsD
         }
 
         /// <summary>
-        /// Post an event to the stream. The source of the event is defined with <see cref="DogStatsDConfiguration.Source"/>.
+        /// Post an event to the stream.
         /// </summary>
         /// <param name="alertType">The level of alert of the event.</param>
         /// <param name="title">The event title. Limited to 100 characters.</param>
@@ -134,7 +134,7 @@ namespace DatadogStatsD
             string? aggregationKey = null, IList<string>? tags = null)
         {
             _telemetry.EventSent();
-            _transport.Send(DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, _sourceBytes,
+            _transport.Send(DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, SourceBytes,
                 aggregationKey, _constantTagsBytes, tags));
         }
 

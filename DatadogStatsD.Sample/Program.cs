@@ -14,7 +14,6 @@ namespace DatadogStatsD.Sample
             {
                 Namespace = "test",
                 ConstantTags = new[] { "env:dev" },
-                Source = "evian",
             });
 
             const int delay = 50;
