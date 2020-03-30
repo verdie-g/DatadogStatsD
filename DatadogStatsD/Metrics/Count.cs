@@ -23,7 +23,14 @@ namespace DatadogStatsD.Metrics
             : base(transport, telemetry, metricName, 1.0, tags, true)
         {
             _tickTimer = tickTimer;
-            _onTick = (_, __) => Send(Interlocked.Exchange(ref _value, 0), TypeBytes);
+            _onTick = (_, __) =>
+            {
+                long delta = Interlocked.Exchange(ref _value, 0);
+                if (delta != 0)
+                {
+                    Send(delta, TypeBytes);
+                }
+            };
             _tickTimer.Elapsed += _onTick;
         }
 
