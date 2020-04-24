@@ -19,18 +19,7 @@ namespace DatadogStatsD.Transport
         private readonly Task _sendBuffersTask;
         private readonly CancellationTokenSource _sendBuffersCancellation;
 
-        public NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime,
-            int maxQueueSize)
-            : this(socket, maxBufferingSize, maxBufferingTime, maxQueueSize, new CancellationTokenSource())
-        {
-        }
-
-        public event Action<int> OnPacketSent = size => {};
-        public event Action<int, bool> OnPacketDropped = (size, queue) => {};
-
-        // internal for testing
-        internal NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime,
-            int maxQueueSize, CancellationTokenSource sendBuffersCancellation)
+        public NonBlockingBufferedTransport(ISocket socket, int maxBufferingSize, TimeSpan maxBufferingTime, int maxQueueSize)
         {
             _socket = socket;
             _maxBufferingSize = maxBufferingSize;
@@ -40,9 +29,12 @@ namespace DatadogStatsD.Transport
                 SingleReader = true,
                 SingleWriter = false,
             });
-            _sendBuffersCancellation = sendBuffersCancellation;
+            _sendBuffersCancellation = new CancellationTokenSource();
             _sendBuffersTask = Task.Run(SendBuffers, _sendBuffersCancellation.Token);
         }
+
+        public event Action<int> OnPacketSent = size => {};
+        public event Action<int, bool> OnPacketDropped = (size, queue) => {};
 
         public void Send(ArraySegment<byte> buffer)
         {
@@ -72,38 +64,22 @@ namespace DatadogStatsD.Transport
 
         private async Task SendBuffers()
         {
-            var bufferingCtx = new BufferingContext(_maxBufferingSize, _maxBufferingTime);
+            var bufferingCtx = new BufferingContext(_maxBufferingSize, _maxBufferingTime, _sendBuffersCancellation.Token);
 
             while (true)
             {
-                if (bufferingCtx.BufferingCancellation.IsCancellationRequested)
-                {
-                    bufferingCtx.BufferingCancellation.Dispose();
-                    bufferingCtx.BufferingCancellation = CancellationTokenSource.CreateLinkedTokenSource(_sendBuffersCancellation.Token);
-                }
-
                 // the try block was not extract in its own method to avoid the cost of a new async state machine
                 ArraySegment<byte> buffer;
                 try
                 {
-                    bufferingCtx.BufferingCancellation.CancelAfter(bufferingCtx.RemainingBufferingTime);
-                    buffer = await _chan.Reader.ReadAsync(bufferingCtx.BufferingCancellation.Token);
-
+                    bufferingCtx.EnableTimeout();
+                    buffer = await _chan.Reader.ReadAsync(bufferingCtx.BufferingCancellation);
                     // make sure it doesn't get cancelled so it can be reused in the next iteration
-                    // Timeout.Infinite won't work because it would delete the underlying timer
-                    bufferingCtx.BufferingCancellation.CancelAfter(int.MaxValue);
+                    bufferingCtx.DisableTimeout();
                 }
                 catch (OperationCanceledException) when (!_sendBuffersCancellation.IsCancellationRequested) // timeout reached
                 {
-                    if (!bufferingCtx.Empty)
-                    {
-                        await Flush(bufferingCtx);
-                    }
-                    else
-                    {
-                        bufferingCtx.Reset();
-                    }
-
+                    await Flush(bufferingCtx);
                     continue;
                 }
 
@@ -126,7 +102,11 @@ namespace DatadogStatsD.Transport
 
         private async Task Flush(BufferingContext bufferingCtx)
         {
-            await SendBuffer(bufferingCtx.Segment);
+            if (bufferingCtx.Segment.Count != 0)
+            {
+                await SendBuffer(bufferingCtx.Segment);
+            }
+
             bufferingCtx.Reset();
         }
 
@@ -148,21 +128,23 @@ namespace DatadogStatsD.Transport
         {
             private readonly int _maxBufferingSize;
             private readonly TimeSpan _maxBufferingTime;
+            private readonly CancellationToken _cancellationToken; // global cancellation
             private readonly byte[] _buffer;
             private readonly Stopwatch _stopwatch;
+            private CancellationTokenSource _bufferingCancellation;
             private int _size;
 
-            public bool Empty => _size == 0;
-            public TimeSpan RemainingBufferingTime => TimeSpan.FromMilliseconds(Math.Max(0, _maxBufferingTime.TotalMilliseconds - _stopwatch.Elapsed.TotalMilliseconds));
             public ArraySegment<byte> Segment => new ArraySegment<byte>(_buffer, 0, _size - 1); // -1 for extra '\n'
-            public CancellationTokenSource BufferingCancellation { get; set; } = new CancellationTokenSource();
+            public CancellationToken BufferingCancellation => _bufferingCancellation.Token;
 
-            public BufferingContext(int maxBufferingSize, TimeSpan maxBufferingTime)
+            public BufferingContext(int maxBufferingSize, TimeSpan maxBufferingTime, CancellationToken cancellationToken)
             {
                 _maxBufferingSize = maxBufferingSize;
                 _maxBufferingTime = maxBufferingTime;
+                _cancellationToken = cancellationToken;
                 _buffer = new byte[maxBufferingSize + 1]; // +1 for extra '\n'
                 _stopwatch = new Stopwatch();
+                _bufferingCancellation = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken);
                 _size = 0;
 
                 _stopwatch.Start();
@@ -189,6 +171,24 @@ namespace DatadogStatsD.Transport
             {
                 _size = 0;
                 _stopwatch.Restart();
+            }
+
+            public void EnableTimeout()
+            {
+                if (_bufferingCancellation.IsCancellationRequested)
+                {
+                    _bufferingCancellation.Dispose();
+                    _bufferingCancellation = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken);
+                }
+
+                double remainingBufferingTime = Math.Max(0, _maxBufferingTime.TotalMilliseconds - _stopwatch.Elapsed.TotalMilliseconds);
+                _bufferingCancellation.CancelAfter((int)remainingBufferingTime);
+            }
+
+            public void DisableTimeout()
+            {
+                // Timeout.Infinite won't work because it would delete the underlying timer
+                _bufferingCancellation.CancelAfter(int.MaxValue);
             }
         }
     }
