@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 

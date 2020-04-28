@@ -5,6 +5,7 @@ using System.Text;
 using System.Timers;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
+using DatadogStatsD.Protocol;
 using DatadogStatsD.ServiceChecks;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;

@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Text;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
+using DatadogStatsD.Protocol;
 using DatadogStatsD.ServiceChecks;
 using NUnit.Framework;
 

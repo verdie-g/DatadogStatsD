@@ -9,7 +9,7 @@ using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.ServiceChecks;
 
-namespace DatadogStatsD
+namespace DatadogStatsD.Protocol
 {
     internal static class DogStatsDSerializer
     {

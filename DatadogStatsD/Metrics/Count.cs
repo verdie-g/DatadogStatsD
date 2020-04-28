@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
+using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 using Timer = System.Timers.Timer;
