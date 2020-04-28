@@ -20,7 +20,6 @@ namespace DatadogStatsD
     internal class Telemetry : ITelemetry
     {
         private const string MetricPrefix = "datadog.dogstatsd.client.";
-        private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(10);
 
         private const string ClientTag = "client:cs";
         private const string ClientVersionKey = "client_version";
