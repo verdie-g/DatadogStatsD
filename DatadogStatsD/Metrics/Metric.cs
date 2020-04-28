@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD.Metrics

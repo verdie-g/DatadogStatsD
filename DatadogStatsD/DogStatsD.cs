@@ -6,6 +6,7 @@ using System.Timers;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.ServiceChecks;
+using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD

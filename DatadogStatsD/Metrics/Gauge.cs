@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Timers;
+using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD.Metrics

@@ -1,21 +1,11 @@
-using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Timers;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.Transport;
 
-namespace DatadogStatsD
+namespace DatadogStatsD.Telemetering
 {
-    internal interface ITelemetry : IDisposable
-    {
-        void MetricSent();
-        void EventSent();
-        void ServiceCheckSent();
-        void PacketSent(int size);
-        void PacketDropped(int size, bool queue);
-    }
-
     /// <remarks>https://docs.datadoghq.com/developers/dogstatsd/high_throughput#client-side-telemetry</remarks>
     internal class Telemetry : ITelemetry
     {

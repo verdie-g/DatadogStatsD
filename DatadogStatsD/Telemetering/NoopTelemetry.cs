@@ -1,4 +1,4 @@
-namespace DatadogStatsD
+namespace DatadogStatsD.Telemetering
 {
     internal class NoopTelemetry : ITelemetry
     {
