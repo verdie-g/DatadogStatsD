@@ -99,6 +99,7 @@ namespace DatadogStatsD
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
+            ThrowIfInvalidSampleRate(sampleRate);
             return new Histogram(
                 _transport,
                 _telemetry,
@@ -132,6 +133,7 @@ namespace DatadogStatsD
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Distribution CreateDistribution(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
+            ThrowIfInvalidSampleRate(sampleRate);
             return new Distribution(
                 _transport,
                 _telemetry,
@@ -195,6 +197,14 @@ namespace DatadogStatsD
         {
             _transport.Dispose();
             _telemetry.Dispose();
+        }
+
+        private void ThrowIfInvalidSampleRate(double sampleRate)
+        {
+            if (sampleRate < 0 || sampleRate > 1)
+            {
+                throw new ArgumentException("Sampling rate should be between 0.0 and 1.0", nameof(sampleRate));
+            }
         }
 
         private string PrependNamespace(string metricName)
