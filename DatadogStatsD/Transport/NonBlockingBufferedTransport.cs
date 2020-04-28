@@ -79,20 +79,20 @@ namespace DatadogStatsD.Transport
                 }
                 catch (OperationCanceledException) when (!_sendBuffersCancellation.IsCancellationRequested) // timeout reached
                 {
-                    await Flush(bufferingCtx);
+                    Flush(bufferingCtx);
                     continue;
                 }
 
                 if (buffer.Count > _maxBufferingSize)
                 {
-                    await SendBuffer(buffer);
+                    SendBuffer(buffer);
                     ArrayPool<byte>.Shared.Return(buffer.Array);
                     continue;
                 }
 
                 if (!bufferingCtx.Fits(buffer))
                 {
-                    await Flush(bufferingCtx);
+                    Flush(bufferingCtx);
                 }
 
                 bufferingCtx.Append(buffer);
@@ -100,27 +100,26 @@ namespace DatadogStatsD.Transport
             }
         }
 
-        private async Task Flush(BufferingContext bufferingCtx)
+        private void Flush(BufferingContext bufferingCtx)
         {
             if (bufferingCtx.Segment.Count != 0)
             {
-                await SendBuffer(bufferingCtx.Segment);
+                SendBuffer(bufferingCtx.Segment);
             }
 
             bufferingCtx.Reset();
         }
 
-        private async Task SendBuffer(ArraySegment<byte> buffer)
+        private void SendBuffer(ArraySegment<byte> buffer)
         {
             try
             {
-                await _socket.SendAsync(buffer);
+                _socket.Send(buffer);
                 OnPacketSent(buffer.Count);
             }
-            catch // an error occured. Try resuming after 1 second
+            catch
             {
                 OnPacketDropped(buffer.Count, false);
-                await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
 

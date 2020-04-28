@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -7,23 +8,23 @@ namespace DatadogStatsD.Transport
     internal class UdsSocket : ISocket
     {
         private readonly UnixDomainSocketEndPoint _endpoint;
-        private Socket? _underlyingSocket;
+        private Socket _underlyingSocket;
 
         public UdsSocket(string path)
         {
             _endpoint = new UnixDomainSocketEndPoint(path);
-            // sync over async, acceptable at startup time
-            CreateSocket().GetAwaiter().GetResult();
+            _underlyingSocket = CreateUnixSocket(_endpoint);
         }
 
-        public async Task SendAsync(ArraySegment<byte> buffer)
+        public void Send(ArraySegment<byte> buffer)
         {
-            if (_underlyingSocket == null || !_underlyingSocket.Connected)
+            if (!_underlyingSocket.Connected)
             {
-                await CreateSocket();
+                Dispose();
+                _underlyingSocket = CreateUnixSocket(_endpoint);
             }
 
-            await _underlyingSocket.SendAsync(buffer, SocketFlags.None);
+            _underlyingSocket.Send(buffer, SocketFlags.None);
         }
 
         public void Dispose()
@@ -31,11 +32,11 @@ namespace DatadogStatsD.Transport
             _underlyingSocket?.Dispose();
         }
 
-        private Task CreateSocket()
+        private static Socket CreateUnixSocket(EndPoint endpoint)
         {
-            Dispose();
-            _underlyingSocket = new Socket(AddressFamily.Unix, SocketType.Dgram, ProtocolType.IP);
-            return _underlyingSocket.ConnectAsync(_endpoint);
+            var socket = new Socket(AddressFamily.Unix, SocketType.Dgram, ProtocolType.IP);
+            socket.Connect(endpoint);
+            return socket;
         }
     }
 }

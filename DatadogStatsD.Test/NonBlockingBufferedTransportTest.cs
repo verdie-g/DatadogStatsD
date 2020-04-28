@@ -119,9 +119,9 @@ namespace DatadogStatsD.Test
         public async Task ResumesCorrectlyAfterASocketException()
         {
             var socket = new Mock<ISocket>();
-            socket.SetupSequence(s => s.SendAsync(It.IsAny<ArraySegment<byte>>()))
+            socket.SetupSequence(s => s.Send(It.IsAny<ArraySegment<byte>>()))
                 .Throws(new SocketException())
-                .Returns(Task.CompletedTask);
+                .Pass();
 
             var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(1000), 2);
 
@@ -154,7 +154,7 @@ namespace DatadogStatsD.Test
         private void VerifySendCalledWithBufferOfSize(Mock<ISocket> socketMock, int size, Times times)
         {
             socketMock.Verify(
-                s => s.SendAsync(It.Is<ArraySegment<byte>>(b => b.Count == size)),
+                s => s.Send(It.Is<ArraySegment<byte>>(b => b.Count == size)),
                 times);
         }
     }

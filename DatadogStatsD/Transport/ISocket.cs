@@ -5,6 +5,6 @@ namespace DatadogStatsD.Transport
 {
     internal interface ISocket : IDisposable
     {
-        Task SendAsync(ArraySegment<byte> buffer);
+        void Send(ArraySegment<byte> buffer);
     }
 }
