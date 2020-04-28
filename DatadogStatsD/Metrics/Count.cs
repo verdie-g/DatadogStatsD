@@ -34,16 +34,28 @@ namespace DatadogStatsD.Metrics
             _tickTimer.Elapsed += _onTick;
         }
 
+        /// <summary>
+        /// Increment the <see cref="Count"/>.
+        /// </summary>
+        /// <param name="delta">Delta to add to the <see cref="Count"/>.</param>
         public void Increment(long delta = 1)
         {
             Interlocked.Add(ref _value, delta);
         }
 
+        /// <summary>
+        /// Decrement the <see cref="Count"/>.
+        /// </summary>
+        /// <param name="delta">Delta to subtract to the <see cref="Count"/>.</param>
         public void Decrement(long delta = 1)
         {
             Interlocked.Add(ref _value, -delta);
         }
 
+        /// <summary>
+        /// Break the bond between the <see cref="Count"/> and the <see cref="DogStatsD"/>. Not calling this method
+        /// will result in CPU/Memory leak.
+        /// </summary>
         public override void Dispose()
         {
             _tickTimer.Elapsed -= _onTick;

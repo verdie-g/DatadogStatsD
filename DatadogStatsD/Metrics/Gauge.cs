@@ -25,6 +25,10 @@ namespace DatadogStatsD.Metrics
             _tickTimer.Elapsed += _onTick;
         }
 
+        /// <summary>
+        /// Break the bond between the <see cref="Count"/> and the <see cref="DogStatsD"/>. Not calling this method
+        /// will result in CPU/Memory leak.
+        /// </summary>
         public override void Dispose()
         {
             _tickTimer.Elapsed -= _onTick;

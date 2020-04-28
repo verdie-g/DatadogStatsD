@@ -15,6 +15,10 @@ namespace DatadogStatsD.Metrics
         {
         }
 
+        /// <summary>
+        /// Adds the specified value to the set.
+        /// </summary>
+        /// <param name="value">The value to add to the set.</param>
         public void Add(long value)
         {
             Send(value, TypeBytes);

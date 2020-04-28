@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace DatadogStatsD
 {
+    /// <summary>
+    /// DogStatsD client configuration.
+    /// </summary>
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd#client-instantiation-parameters</remarks>
     public class DogStatsDConfiguration
     {

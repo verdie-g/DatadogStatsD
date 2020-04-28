@@ -16,6 +16,10 @@ namespace DatadogStatsD.Metrics
         {
         }
 
+        /// <summary>
+        /// Record a new value for current <see cref="Histogram"/> instance.
+        /// </summary>
+        /// <param name="value">The value.</param>
         public void Record(double value)
         {
             Send(value, TypeBytes);

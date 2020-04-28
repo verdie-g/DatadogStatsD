@@ -4,6 +4,9 @@ using DatadogStatsD.Transport;
 
 namespace DatadogStatsD.Metrics
 {
+    /// <summary>
+    /// Represents any DogstatsD metric.
+    /// </summary>
     public abstract class Metric : IDisposable
     {
         private readonly ITransport _transport;
@@ -24,6 +27,9 @@ namespace DatadogStatsD.Metrics
             _tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags);
         }
 
+        /// <summary>
+        /// Do nothing. Overriden by metric like <see cref="Count"/> or <see cref="Gauge"/> that use a timer.
+        /// </summary>
         public virtual void Dispose()
         {
         }

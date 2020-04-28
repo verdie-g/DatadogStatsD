@@ -1,6 +1,6 @@
 namespace DatadogStatsD
 {
-    public class NoopTelemetry : ITelemetry
+    internal class NoopTelemetry : ITelemetry
     {
         public void MetricSent()
         {

@@ -34,10 +34,16 @@ namespace DatadogStatsD
         private readonly ITransport _transport;
         private readonly ITelemetry _telemetry;
 
+        /// <summary>
+        /// Instantiates a new DogstatsD client using the default configuration, that is, UDP on localhost:8125.
+        /// </summary>
         public DogStatsD() : this(DefaultConfiguration)
         {
         }
 
+        /// <summary>
+        /// Instantiates a new DogstatsD client using the specified configuration.
+        /// </summary>
         public DogStatsD(DogStatsDConfiguration conf)
         {
             _conf = conf;
@@ -68,6 +74,11 @@ namespace DatadogStatsD
             _transport.OnPacketDropped += (size, queue) => _telemetry.PacketDropped(size, queue);
         }
 
+        /// <summary>
+        /// Creates a new <see cref="Count"/> bound to the current <see cref="DogStatsD"/> instance.
+        /// </summary>
+        /// <param name="metricName">Name of the metric.</param>
+        /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Count CreateCount(string metricName, IList<string>? tags = null)
         {
             return new Count(
@@ -78,6 +89,12 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
+        /// <summary>
+        /// Creates a new <see cref="Histogram"/> bound to the current <see cref="DogStatsD"/> instance.
+        /// </summary>
+        /// <param name="metricName">Name of the metric.</param>
+        /// <param name="sampleRate">Sample rate to apply to the metric. Takes a value between 0 (everything is sampled, so nothing is sent) and 1 (no sample).</param>
+        /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
             return new Histogram(
@@ -88,6 +105,12 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
+        /// <summary>
+        /// Creates a new <see cref="Gauge"/> bound to the current <see cref="DogStatsD"/> instance.
+        /// </summary>
+        /// <param name="metricName">Name of the metric.</param>
+        /// <param name="evaluator">A function that will be polled to get the value associated with the metric.</param>
+        /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Gauge CreateGauge(string metricName, Func<double> evaluator, IList<string>? tags = null)
         {
             return new Gauge(
@@ -99,6 +122,12 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
+        /// <summary>
+        /// Creates a new <see cref="Distribution"/> bound to the current <see cref="DogStatsD"/> instance.
+        /// </summary>
+        /// <param name="metricName">Name of the metric.</param>
+        /// <param name="sampleRate">Sample rate to apply to the metric. Takes a value between 0 (everything is sampled, so nothing is sent) and 1 (no sample).</param>
+        /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Distribution CreateDistribution(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
             return new Distribution(
@@ -109,6 +138,11 @@ namespace DatadogStatsD
                 PrependConstantTags(tags));
         }
 
+        /// <summary>
+        /// Creates a new <see cref="Set"/> bound to the current <see cref="DogStatsD"/> instance.
+        /// </summary>
+        /// <param name="metricName">Name of the metric.</param>
+        /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Set CreateSet(string metricName, IList<string>? tags = null)
         {
             return new Set(
@@ -152,6 +186,9 @@ namespace DatadogStatsD
                 _constantTagsBytes, tags));
         }
 
+        /// <summary>
+        /// Releases all resources used by the current <see cref="DogStatsD"/> instance.
+        /// </summary>
         public void Dispose()
         {
             _transport.Dispose();
