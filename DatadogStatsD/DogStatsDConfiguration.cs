@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 
 namespace DatadogStatsD
 {
@@ -9,29 +11,20 @@ namespace DatadogStatsD
     public class DogStatsDConfiguration
     {
         /// <summary>
-        /// The host of your DogStatsD server. Defaults to "localhost".
+        /// The endpoint of the DogStatsD agent. Defaults to localhost:8125. Use one of those subclasses:
+        /// <see cref="IPEndPoint"/>, <see cref="DnsEndPoint"/>, or <see cref="UnixDomainSocketEndPoint"/>.
         /// </summary>
-        public string Host { get; set; } = "localhost";
-
-        /// <summary>
-        /// The port of your DogStatsD server. Defaults to 8125.
-        /// </summary>
-        public int Port { get; set; } = 8125;
-
-        /// <summary>
-        /// The path to the DogStatsD Unix domain socket (overrides <see cref="Host"/> and <see cref="Port"/>).
-        /// </summary>
-        public string? UnixSocketPath { get; set; }
-
-        /// <summary>
-        /// Tags to apply to all metrics, events, and service checks.
-        /// </summary>
-        public IList<string>? ConstantTags { get; set; }
+        public EndPoint EndPoint { get; set; } = new DnsEndPoint("localhost", 8125);
 
         /// <summary>
         /// Namespace to prefix all metrics, and service checks.
         /// </summary>
         public string? Namespace { get; set; }
+
+        /// <summary>
+        /// Tags to apply to all metrics, events, and service checks.
+        /// </summary>
+        public IList<string>? ConstantTags { get; set; }
 
         /// <summary>
         /// Enabled telemetry. Defaults to true.

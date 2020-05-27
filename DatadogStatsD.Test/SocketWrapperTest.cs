@@ -4,12 +4,12 @@ using NUnit.Framework;
 
 namespace DatadogStatsD.Test
 {
-    public class UdsSocketTest
+    public class SocketWrapperTest
     {
         [Test]
-        public void ShouldThrowIfSocketDoesntExist()
+        public void ShouldThrowIfUnixSocketDoesntExist()
         {
-            var ex = Assert.Catch(() => new UdsSocket("toto"));
+            var ex = Assert.Catch(() =>  new SocketWrapper(new UnixDomainSocketEndPoint("toto")));
             Assert.IsInstanceOf<SocketException>(ex);
         }
     }

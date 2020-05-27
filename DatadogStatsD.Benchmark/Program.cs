@@ -41,8 +41,7 @@ namespace DatadogStatsD.Benchmark
 
                 _datadogStatsD = new DogStatsD(new DogStatsDConfiguration
                 {
-                    Host = Endpoint.Address.ToString(),
-                    Port = Endpoint.Port,
+                    EndPoint = Endpoint,
                     Namespace = Namespace,
                     ConstantTags = ConstantTags,
                 }).CreateCount(MetricName, Tags);
@@ -101,8 +100,7 @@ namespace DatadogStatsD.Benchmark
 
                 _datadogStatsD = new DogStatsD(new DogStatsDConfiguration
                 {
-                    Host = Endpoint.Address.ToString(),
-                    Port = Endpoint.Port,
+                    EndPoint = Endpoint,
                     Namespace = Namespace,
                     ConstantTags = ConstantTags,
                 }).CreateHistogram(MetricName, 1.0, Tags);

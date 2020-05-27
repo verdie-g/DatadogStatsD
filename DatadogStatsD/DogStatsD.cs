@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Timers;
 using DatadogStatsD.Events;
@@ -52,22 +53,20 @@ namespace DatadogStatsD
             _namespaceBytes = conf.Namespace != null ? DogStatsDSerializer.SerializeMetricName(conf.Namespace) : Array.Empty<byte>();
             _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(_conf.ConstantTags);
 
-            ISocket socket;
             int maxBufferingSize;
             string transportName;
-            if (conf.UnixSocketPath == null)
+            if (conf.EndPoint.AddressFamily == AddressFamily.Unix)
             {
-                socket = new UdpSocket(_conf.Host ?? DefaultConfiguration.Host, _conf.Port);
-                maxBufferingSize = UdpPayloadSize;
-                transportName = UdpName;
-            }
-            else
-            {
-                socket = new UdsSocket(_conf.UnixSocketPath!);
                 maxBufferingSize = UdsPayloadSize;
                 transportName = UdsName;
             }
+            else
+            {
+                maxBufferingSize = UdpPayloadSize;
+                transportName = UdpName;
+            }
 
+            var socket = new SocketWrapper(_conf.EndPoint);
             _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
             _telemetry = _conf.Telemetry
                 ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer)
