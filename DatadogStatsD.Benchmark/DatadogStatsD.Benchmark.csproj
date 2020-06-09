@@ -6,9 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="BenchmarkDotNet" Version="0.12.0" />
+      <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
       <PackageReference Include="DatadogSharp" Version="1.5.5.1" />
-      <PackageReference Include="DogStatsD-CSharp-Client" Version="4.0.1" />
+      <PackageReference Include="DogStatsD-CSharp-Client" Version="5.0.2" />
     </ItemGroup>
 
     <ItemGroup>
