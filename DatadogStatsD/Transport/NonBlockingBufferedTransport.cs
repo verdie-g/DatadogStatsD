@@ -68,19 +68,35 @@ namespace DatadogStatsD.Transport
 
             while (true)
             {
-                // the try block was not extract in its own method to avoid the cost of a new async state machine
                 ArraySegment<byte> buffer;
-                try
+                if (_sendBuffersCancellation.IsCancellationRequested) // disposing
                 {
-                    bufferingCtx.EnableTimeout();
-                    buffer = await _chan.Reader.ReadAsync(bufferingCtx.BufferingCancellation);
-                    // make sure it doesn't get cancelled so it can be reused in the next iteration
-                    bufferingCtx.DisableTimeout();
+                    if (!_chan.Reader.TryRead(out buffer))
+                    {
+                        Flush(bufferingCtx);
+                        return;
+                    }
                 }
-                catch (OperationCanceledException) when (!_sendBuffersCancellation.IsCancellationRequested) // timeout reached
+                else
                 {
-                    Flush(bufferingCtx);
-                    continue;
+                    // the try block was not extract in its own method to avoid the cost of a new async state machine
+                    try
+                    {
+                        bufferingCtx.EnableTimeout();
+                        buffer = await _chan.Reader.ReadAsync(bufferingCtx.BufferingCancellation);
+                        // make sure it doesn't get cancelled so it can be reused in the next iteration
+                        bufferingCtx.DisableTimeout();
+                    }
+                    catch (OperationCanceledException) // timeout reached or disposing
+                    {
+                        if (!_sendBuffersCancellation.IsCancellationRequested) // timeout
+                        {
+                            Flush(bufferingCtx);
+                        }
+
+                        // continue in both case. If timeout, reloop to retry getting a value. If disposing reloop to dequeue all buffers
+                        continue;
+                    }
                 }
 
                 if (buffer.Count > _maxBufferingSize)

@@ -140,6 +140,17 @@ namespace DatadogStatsD.Test
             transport.Dispose();
         }
 
+        [Test]
+        public void DisposeConsumesEntireQueue()
+        {
+            var socket = new Mock<ISocket>();
+            var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(500), 2);
+            transport.Send(CreateBuffer(7));
+            transport.Send(CreateBuffer(7));
+            transport.Dispose();
+            VerifySendCalledWithBufferOfSize(socket, 7, Times.Exactly(2));
+        }
+
         private ArraySegment<byte> CreateBuffer(int size)
         {
             var buffer = ArrayPool<byte>.Shared.Rent(size);
