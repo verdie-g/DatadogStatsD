@@ -451,11 +451,7 @@ namespace DatadogStatsD.Protocol
         }
 
         private static int IntegerWidth(long l) => (int)Math.Floor(Math.Log10(Math.Abs(l)) + 1) + (l < 0 ? 1 : 0);
-
-        private static string GenerateIntegerFormat(int width)
-        {
-            return string.Create<object?>(width, null, (chars, _) => chars.Fill('0'));
-        }
+        private static string GenerateIntegerFormat(int width) => new string('0', width);
 
         private struct DogStatsDStream
         {
