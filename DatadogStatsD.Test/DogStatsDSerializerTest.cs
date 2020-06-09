@@ -51,6 +51,7 @@ namespace DatadogStatsD.Test
         }
 
         [TestCase(AlertType.Info, "title", "message", EventPriority.Normal, null, null, null, null, "_e{005,0007}:title|message")]
+        [TestCase(AlertType.Info, "abc\ndef\r\nghi", "abc\ndef\r\nghi", EventPriority.Normal, null, null, null, null, "_e{014,0014}:abc\\ndef\r\\nghi|abc\\ndef\r\\nghi")]
         [TestCase(AlertType.Info, "C'est un événement", "", EventPriority.Normal, null, null, null, null, "_e{020,0006}:C'est un événement|")]
         [TestCase(AlertType.Success, "a", "b", EventPriority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:success")]
         [TestCase(AlertType.Error, "a", "b", EventPriority.Normal, null, null, null, null, "_e{001,0001}:a|b|t:error")]

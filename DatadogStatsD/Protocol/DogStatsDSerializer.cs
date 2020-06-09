@@ -111,6 +111,8 @@ namespace DatadogStatsD.Protocol
             byte[] sourceBytes, string? aggregationKey, byte[] constantTagsBytes, IList<string>? tags)
         {
             tags ??= Array.Empty<string>();
+            title = EscapeNewLines(title);
+            message = EscapeNewLines(message);
 
             int length = SerializedEventLength(alertType, title, message, priority, sourceBytes, aggregationKey, constantTagsBytes, tags);
             var stream = new DogStatsDStream(length);
@@ -452,6 +454,7 @@ namespace DatadogStatsD.Protocol
 
         private static int IntegerWidth(long l) => (int)Math.Floor(Math.Log10(Math.Abs(l)) + 1) + (l < 0 ? 1 : 0);
         private static string GenerateIntegerFormat(int width) => new string('0', width);
+        private static string EscapeNewLines(string s) => s.Replace("\n", "\\n");
 
         private struct DogStatsDStream
         {
