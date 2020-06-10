@@ -81,6 +81,7 @@ namespace DatadogStatsD.Test
         [TestCase(null, "cd", CheckStatus.Critical, null, null, null, "_sc|cd|2")]
         [TestCase(null, "cd", CheckStatus.Unknown, null, null, null, "_sc|cd|3")]
         [TestCase(null, "cd", CheckStatus.Ok, "é ä ù", null, null, "_sc|cd|0|m:é ä ù")]
+        [TestCase(null, "cd", CheckStatus.Ok, "abc\nm: def\r\nghi", null, null, "_sc|cd|0|m:abc\\nm\\: def\r\\nghi")]
         [TestCase(null, "cd", CheckStatus.Ok, null, "ef,gh", null, "_sc|cd|0|#ef,gh")]
         [TestCase(null, "cd", CheckStatus.Ok, null, null, "ij,kl", "_sc|cd|0|#ij,kl")]
         [TestCase("ab", "cd", CheckStatus.Ok, "aaa", "ef,gh", "ij,kl", "_sc|ab.cd|0|#ef,gh,ij,kl|m:aaa")]

@@ -171,6 +171,7 @@ namespace DatadogStatsD.Protocol
         public static ArraySegment<byte> SerializeServiceCheck(byte[] namespaceBytes, string name, CheckStatus checkStatus, string message,
             byte[] constantTagsBytes, IList<string>? extraTags)
         {
+            message = EscapeNewLines(message).Replace("m:", "m\\:");
             extraTags ??= Array.Empty<string>();
 
             int length = SerializedServiceCheckLength(namespaceBytes, name, message, constantTagsBytes, extraTags);
