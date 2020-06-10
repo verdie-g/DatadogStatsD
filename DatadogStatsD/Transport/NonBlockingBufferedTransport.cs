@@ -149,7 +149,7 @@ namespace DatadogStatsD.Transport
             private CancellationTokenSource _bufferingCancellation;
             private int _size;
 
-            public ArraySegment<byte> Segment => new ArraySegment<byte>(_buffer, 0, _size - 1); // -1 for extra '\n'
+            public ArraySegment<byte> Segment => new ArraySegment<byte>(_buffer, 0, _size == 0 ? 0 : _size - 1); // -1 for extra '\n'
             public CancellationToken BufferingCancellation => _bufferingCancellation.Token;
 
             public BufferingContext(int maxBufferingSize, TimeSpan maxBufferingTime, CancellationToken cancellationToken)
