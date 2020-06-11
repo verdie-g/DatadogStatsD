@@ -69,7 +69,7 @@ namespace DatadogStatsD
             var socket = new SocketWrapper(_conf.EndPoint);
             _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
             _telemetry = _conf.Telemetry
-                ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer)
+                ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer, _conf.ConstantTags ?? Array.Empty<string>())
                 : (ITelemetry)new NoopTelemetry();
             _transport.OnPacketSent += size => _telemetry.PacketSent(size);
             _transport.OnPacketDropped += (size, queue) => _telemetry.PacketDropped(size, queue);
