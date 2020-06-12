@@ -9,6 +9,7 @@ using DatadogStatsD.Metrics;
 using DatadogStatsD.Protocol;
 using DatadogStatsD.ServiceChecks;
 using DatadogStatsD.Telemetering;
+using DatadogStatsD.Ticking;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD
@@ -28,8 +29,8 @@ namespace DatadogStatsD
         private static readonly DogStatsDConfiguration DefaultConfiguration = new DogStatsDConfiguration();
         // https://docs.datadoghq.com/developers/dogstatsd/data_aggregation#how-is-aggregation-performed-with-the-dogstatsd-server
         private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10);
-        private static readonly Timer TickTimer = new Timer(TickInterval.TotalMilliseconds) { Enabled = true };
-        private static readonly byte[] SourceBytes = Encoding.ASCII.GetBytes("csharp");
+        private static readonly ITimer TickTimer = new TimerWrapper(TickInterval);
+        private static readonly byte[] SourceBytes = DogStatsDSerializer.SerializeSource("csharp");
 
         private readonly DogStatsDConfiguration _conf;
         private readonly byte[] _namespaceBytes;
@@ -98,7 +99,6 @@ namespace DatadogStatsD
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
-            ThrowIfInvalidSampleRate(sampleRate);
             return new Histogram(
                 _transport,
                 _telemetry,
@@ -132,7 +132,6 @@ namespace DatadogStatsD
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Distribution CreateDistribution(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
         {
-            ThrowIfInvalidSampleRate(sampleRate);
             return new Distribution(
                 _transport,
                 _telemetry,
@@ -196,14 +195,6 @@ namespace DatadogStatsD
         {
             _transport.Dispose();
             _telemetry.Dispose();
-        }
-
-        private void ThrowIfInvalidSampleRate(double sampleRate)
-        {
-            if (sampleRate < 0 || sampleRate > 1)
-            {
-                throw new ArgumentException("Sampling rate should be between 0.0 and 1.0", nameof(sampleRate));
-            }
         }
 
         private string PrependNamespace(string metricName)

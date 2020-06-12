@@ -14,10 +14,13 @@ namespace DatadogStatsD.Metrics
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Distribution);
 
         internal Distribution(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
-            : base(transport, telemetry, metricName, sampleRate, tags, false)
+            : base(transport, telemetry, metricName, sampleRate, tags, true)
         {
         }
 
+        /// <summary>
+        /// Record a global distribution value.
+        /// </summary>
         public void Record(double value)
         {
             Send(value, TypeBytes);

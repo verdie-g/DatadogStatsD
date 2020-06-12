@@ -3,8 +3,8 @@ using System.Threading;
 using System.Timers;
 using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
+using DatadogStatsD.Ticking;
 using DatadogStatsD.Transport;
-using Timer = System.Timers.Timer;
 
 namespace DatadogStatsD.Metrics
 {
@@ -16,11 +16,11 @@ namespace DatadogStatsD.Metrics
     {
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Count);
 
-        private readonly Timer _tickTimer;
+        private readonly ITimer _tickTimer;
 
         private long _value;
 
-        internal Count(ITransport transport, ITelemetry telemetry, Timer tickTimer, string metricName, IList<string>? tags)
+        internal Count(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName, IList<string>? tags)
             : base(transport, telemetry, metricName, 1.0, tags, true)
         {
             _tickTimer = tickTimer;
@@ -51,10 +51,11 @@ namespace DatadogStatsD.Metrics
         /// </summary>
         public override void Dispose()
         {
+            OnTick(null, null); // flush
             _tickTimer.Elapsed -= OnTick;
         }
 
-        private void OnTick(object _, ElapsedEventArgs __)
+        private void OnTick(object? _, ElapsedEventArgs? __)
         {
             long delta = Interlocked.Exchange(ref _value, 0);
             if (delta != 0)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Timers;
 using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
+using DatadogStatsD.Ticking;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD.Metrics
@@ -15,10 +16,10 @@ namespace DatadogStatsD.Metrics
     {
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Gauge);
 
-        private readonly Timer _tickTimer;
+        private readonly ITimer _tickTimer;
         private readonly Func<double> _evaluator;
 
-        internal Gauge(ITransport transport, ITelemetry telemetry, Timer tickTimer, string metricName,
+        internal Gauge(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName,
             Func<double> evaluator, IList<string>? tags)
             : base(transport, telemetry, metricName, 1.0, tags, false)
         {
@@ -33,10 +34,11 @@ namespace DatadogStatsD.Metrics
         /// </summary>
         public override void Dispose()
         {
+            OnTick(null, null);
             _tickTimer.Elapsed -= OnTick;
         }
 
-        private void OnTick(object _, ElapsedEventArgs __)
+        private void OnTick(object? _, ElapsedEventArgs? __)
         {
             Send(_evaluator(), TypeBytes);
         }

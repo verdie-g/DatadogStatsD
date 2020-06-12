@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Timers;
 using DatadogStatsD.Metrics;
+using DatadogStatsD.Ticking;
 using DatadogStatsD.Transport;
 
 namespace DatadogStatsD.Telemetering
@@ -72,7 +72,7 @@ namespace DatadogStatsD.Telemetering
         /// </summary>
         private readonly Count _packetsDroppedWriterCount;
 
-        public Telemetry(string transportName, ITransport transport, Timer tickTimer, IList<string> constantTags)
+        public Telemetry(string transportName, ITransport transport, ITimer tickTimer, IList<string> constantTags)
         {
             var tags = constantTags.Concat(new[]
             {

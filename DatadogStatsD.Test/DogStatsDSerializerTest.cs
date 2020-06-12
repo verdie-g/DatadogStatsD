@@ -43,11 +43,11 @@ namespace DatadogStatsD.Test
         {
             byte[] nameBytes = DogStatsDSerializer.SerializeMetricName(name);
             byte[] typeBytes = DogStatsDSerializer.SerializeMetricType(type);
-            byte[] sampleRateBytes = sampleRate != null ? DogStatsDSerializer.SerializeSampleRate(sampleRate.Value) : null;
+            byte[]? sampleRateBytes = sampleRate != null ? DogStatsDSerializer.SerializeSampleRate(sampleRate.Value) : null;
             byte[] tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags?.Split(','));
             var metricBytes = DogStatsDSerializer.SerializeMetric(nameBytes, value, typeBytes, sampleRateBytes, tagsBytes);
             Assert.AreEqual(expected, Encoding.ASCII.GetString(metricBytes));
-            ArrayPool<byte>.Shared.Return(metricBytes.Array);
+            ArrayPool<byte>.Shared.Return(metricBytes.Array!);
         }
 
         [TestCase(AlertType.Info, "title", "message", EventPriority.Normal, null, null, null, null, "_e{005,0007}:title|message")]
@@ -63,16 +63,16 @@ namespace DatadogStatsD.Test
         [TestCase(AlertType.Info, "a", "b", EventPriority.Normal, null, null, null, "ef,gh", "_e{001,0001}:a|b|#ef,gh")]
         [TestCase(AlertType.Info, "a", "b", EventPriority.Normal, null, null, "ab,cd", "ef,gh", "_e{001,0001}:a|b|#ab,cd,ef,gh")]
         [TestCase(AlertType.Success, "Ton pote Jean-Mi", "contiguïté", EventPriority.Low, "evian", "clef", "ab,cd", "ef,gh", "_e{016,0012}:Ton pote Jean-Mi|contiguïté|p:low|t:success|k:clef|s:evian|#ab,cd,ef,gh")]
-        public void SerializeEvent(AlertType alertType, string title, string message, EventPriority priority, string source,
-            string aggregationKey, string constantTags, string extraTags, string expected)
+        public void SerializeEvent(AlertType alertType, string title, string message, EventPriority priority, string? source,
+            string? aggregationKey, string? constantTags, string? extraTags, string expected)
         {
             byte[] sourceBytes = source != null ? Encoding.ASCII.GetBytes(source) : Array.Empty<byte>();
             byte[] constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(constantTags?.Split(','));
-            string[] extraTagsList = extraTags?.Split(',');
+            string[]? extraTagsList = extraTags?.Split(',');
             var eventBytes= DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, sourceBytes, aggregationKey, constantTagsBytes, extraTagsList);
             string eventStr = Encoding.UTF8.GetString(eventBytes);
             Assert.AreEqual(expected, eventStr);
-            ArrayPool<byte>.Shared.Return(eventBytes.Array);
+            ArrayPool<byte>.Shared.Return(eventBytes.Array!);
         }
 
         [TestCase(null, "cd", CheckStatus.Ok, null, null, null, "_sc|cd|0")]
@@ -91,11 +91,11 @@ namespace DatadogStatsD.Test
             byte[] nsBytes = ns != null ? Encoding.ASCII.GetBytes(ns) : Array.Empty<byte>();
             message ??= string.Empty;
             byte[] constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(constantTags?.Split(','));
-            string[] extraTagsList = extraTags?.Split(',');
+            string[]? extraTagsList = extraTags?.Split(',');
             var serviceCheckBytes = DogStatsDSerializer.SerializeServiceCheck(nsBytes, name, checkStatus, message, constantTagsBytes, extraTagsList);
             string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
             Assert.AreEqual(expected, serviceCheckStr);
-            ArrayPool<byte>.Shared.Return(serviceCheckBytes.Array);
+            ArrayPool<byte>.Shared.Return(serviceCheckBytes.Array!);
         }
 
         [TestCase(null)]
@@ -121,13 +121,13 @@ namespace DatadogStatsD.Test
         [TestCase(1.5)]
         public void SerializeSampleRateArgumentException(double sampleRate)
         {
-            Assert.Throws<ArgumentException>(() => DogStatsDSerializer.SerializeSampleRate(sampleRate));
+            Assert.Throws<ArgumentOutOfRangeException>(() => DogStatsDSerializer.SerializeSampleRate(sampleRate));
         }
 
         [Test]
         public void EventTitleIsTruncated()
         {
-            string title = string.Create<object>(101, null, (chars, _) => chars.Fill('a'));
+            string title = new string('a', 101);
             var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, title, "", EventPriority.Normal,
                 Array.Empty<byte>(), null, Array.Empty<byte>(), null);
             string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
@@ -137,7 +137,7 @@ namespace DatadogStatsD.Test
         [Test]
         public void EventMessageIsTruncated()
         {
-            string message = string.Create<object>(4001, null, (chars, _) => chars.Fill('a'));
+            string message = new string('a', 4001);
             var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, "", message, EventPriority.Normal,
                 Array.Empty<byte>(), null, Array.Empty<byte>(), null);
             string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);

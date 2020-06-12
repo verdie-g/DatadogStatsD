@@ -237,7 +237,7 @@ namespace DatadogStatsD.Protocol
         {
             if (sampleRate < 0.0 || sampleRate > 1.0)
             {
-                throw new ArgumentException("Sample rate must be included between 0 and 1", nameof(sampleRate));
+                throw new ArgumentOutOfRangeException(nameof(sampleRate), "Sample rate must be included between 0 and 1");
             }
 
             return Encoding.ASCII.GetBytes(sampleRate.ToString(CultureInfo.InvariantCulture));
