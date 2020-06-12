@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
@@ -18,11 +19,17 @@ namespace DatadogStatsD.Metrics
         {
         }
 
+        [Obsolete("Use Sample instead")]
+        public void Record(double value)
+        {
+            Send(value, TypeBytes);
+        }
+
         /// <summary>
-        /// Record a new value for current <see cref="Histogram"/> instance.
+        /// Samples a new value for current <see cref="Histogram"/> instance.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void Record(double value)
+        public void Sample(double value)
         {
             Send(value, TypeBytes);
         }

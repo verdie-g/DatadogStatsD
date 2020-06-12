@@ -29,8 +29,8 @@ exampleMetric.Increment();
 exampleMetric.Decrement();
 
 using var latency = dogStatsD.CreateHistogram("latency", sampleRate: 0.5);
-exampleMetric2.Record(5.423);
-exampleMetric2.Record(1.27);
+exampleMetric2.Sample(5.423);
+exampleMetric2.Sample(1.27);
 
 using var threads = dogStatsD.CreateGauge("threads", () => Process.GetCurrentProcess().Threads.Count);
 

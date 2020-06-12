@@ -20,11 +20,11 @@ namespace DatadogStatsD.Test.Metrics
             var telemetry = new Mock<ITelemetry>();
             var h = new Histogram(transport.Object, telemetry.Object, MetricName, 1.0, Tags);
 
-            h.Record(123.456);
+            h.Sample(123.456);
             transport.Verify(t => t.Send(It.IsAny<ArraySegment<byte>>()), Times.Exactly(1));
             telemetry.Verify(t => t.MetricSent(), Times.Exactly(1));
 
-            h.Record(789);
+            h.Sample(789);
             transport.Verify(t => t.Send(It.IsAny<ArraySegment<byte>>()), Times.Exactly(2));
             telemetry.Verify(t => t.MetricSent(), Times.Exactly(2));
         }
