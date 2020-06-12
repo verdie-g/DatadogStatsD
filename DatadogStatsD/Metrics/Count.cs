@@ -17,7 +17,6 @@ namespace DatadogStatsD.Metrics
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Count);
 
         private readonly Timer _tickTimer;
-        private readonly ElapsedEventHandler _onTick;
 
         private long _value;
 
@@ -25,15 +24,7 @@ namespace DatadogStatsD.Metrics
             : base(transport, telemetry, metricName, 1.0, tags, true)
         {
             _tickTimer = tickTimer;
-            _onTick = (_, __) =>
-            {
-                long delta = Interlocked.Exchange(ref _value, 0);
-                if (delta != 0)
-                {
-                    Send(delta, TypeBytes);
-                }
-            };
-            _tickTimer.Elapsed += _onTick;
+            _tickTimer.Elapsed += OnTick;
         }
 
         /// <summary>
@@ -60,7 +51,16 @@ namespace DatadogStatsD.Metrics
         /// </summary>
         public override void Dispose()
         {
-            _tickTimer.Elapsed -= _onTick;
+            _tickTimer.Elapsed -= OnTick;
+        }
+
+        private void OnTick(object _, ElapsedEventArgs __)
+        {
+            long delta = Interlocked.Exchange(ref _value, 0);
+            if (delta != 0)
+            {
+                Send(delta, TypeBytes);
+            }
         }
     }
 }

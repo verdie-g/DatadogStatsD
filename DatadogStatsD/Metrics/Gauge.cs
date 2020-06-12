@@ -16,15 +16,15 @@ namespace DatadogStatsD.Metrics
         private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Gauge);
 
         private readonly Timer _tickTimer;
-        private readonly ElapsedEventHandler _onTick;
+        private readonly Func<double> _evaluator;
 
         internal Gauge(ITransport transport, ITelemetry telemetry, Timer tickTimer, string metricName,
             Func<double> evaluator, IList<string>? tags)
             : base(transport, telemetry, metricName, 1.0, tags, false)
         {
             _tickTimer = tickTimer;
-            _onTick = (_, __) => Send(evaluator(), TypeBytes);
-            _tickTimer.Elapsed += _onTick;
+            _evaluator = evaluator;
+            _tickTimer.Elapsed += OnTick;
         }
 
         /// <summary>
@@ -33,7 +33,12 @@ namespace DatadogStatsD.Metrics
         /// </summary>
         public override void Dispose()
         {
-            _tickTimer.Elapsed -= _onTick;
+            _tickTimer.Elapsed -= OnTick;
+        }
+
+        private void OnTick(object _, ElapsedEventArgs __)
+        {
+            Send(_evaluator(), TypeBytes);
         }
     }
 }
