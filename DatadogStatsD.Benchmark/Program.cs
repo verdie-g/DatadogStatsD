@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using StatsdClient;
 
 namespace DatadogStatsD.Benchmark
 {
@@ -15,6 +16,7 @@ namespace DatadogStatsD.Benchmark
 
     public class Benchmark
     {
+        private const int Operations = 10_000;
         private static readonly IPEndPoint Endpoint = IPEndPoint.Parse("127.0.0.1:2020");
         private static readonly string Namespace = "ns";
         private static readonly string MetricName = "example_metric.increment";
@@ -29,10 +31,7 @@ namespace DatadogStatsD.Benchmark
 
             private Metrics.Count _datadogStatsD;
             private DatadogSharp.DogStatsd.DatadogStats _datadogSharp;
-            private StatsdClient.Statsd _statsDClient;
-
-            [Params(1_000, 10_000, 100_000)]
-            public int Op { get; set; }
+            private DogStatsdService _statsDClient;
 
             [GlobalSetup]
             public void GlobalSetup()
@@ -48,15 +47,20 @@ namespace DatadogStatsD.Benchmark
 
                 _datadogSharp = new DatadogSharp.DogStatsd.DatadogStats(Endpoint.Address.ToString(), Endpoint.Port,
                     Namespace, ConstantTags);
-                _statsDClient = new StatsdClient.Statsd(
-                    new StatsdClient.StatsdUDP(Endpoint.Address.ToString(), Endpoint.Port),
-                    new StatsdClient.RandomGenerator(), new StatsdClient.StopWatchFactory(), Namespace, ConstantTags);
+                _statsDClient = new DogStatsdService();
+                _statsDClient.Configure(new StatsdConfig
+                {
+                    Prefix = Namespace,
+                    ConstantTags = ConstantTags,
+                    StatsdServerName = Endpoint.Address.ToString(),
+                    StatsdPort = Endpoint.Port
+                });
             }
 
             [Benchmark]
             public void DatadogStatsD()
             {
-                for (int i = 0; i < Op; i += 1)
+                for (int i = 0; i < Operations; i += 1)
                 {
                     _datadogStatsD.Increment(i);
                 }
@@ -65,7 +69,7 @@ namespace DatadogStatsD.Benchmark
             [Benchmark]
             public void DatadogSharp()
             {
-                for (int i = 0; i < Op; i += 1)
+                for (int i = 0; i < Operations; i += 1)
                 {
                     _datadogSharp.Increment(MetricName, i, SamplingRate, Tags);
                 }
@@ -74,9 +78,9 @@ namespace DatadogStatsD.Benchmark
             [Benchmark]
             public void StatsDClient()
             {
-                for (int i = 0; i < Op; i += 1)
+                for (int i = 0; i < Operations; i += 1)
                 {
-                    _statsDClient.Send<StatsdClient.Statsd.Counting, long>(MetricName, i, SamplingRate, Tags);
+                    _statsDClient.Counter(MetricName, i, SamplingRate, Tags);
                 }
             }
         }
@@ -88,10 +92,7 @@ namespace DatadogStatsD.Benchmark
 
             private Metrics.Histogram _datadogStatsD;
             private DatadogSharp.DogStatsd.DatadogStats _datadogSharp;
-            private StatsdClient.Statsd _statsDClient;
-
-            [Params(1_000, 10_000, 100_000)]
-            public int Op { get; set; }
+            private DogStatsdService _statsDClient;
 
             [GlobalSetup]
             public void GlobalSetup()
@@ -107,15 +108,20 @@ namespace DatadogStatsD.Benchmark
 
                 _datadogSharp = new DatadogSharp.DogStatsd.DatadogStats(Endpoint.Address.ToString(), Endpoint.Port,
                     Namespace, ConstantTags);
-                _statsDClient = new StatsdClient.Statsd(
-                    new StatsdClient.StatsdUDP(Endpoint.Address.ToString(), Endpoint.Port),
-                    new StatsdClient.RandomGenerator(), new StatsdClient.StopWatchFactory(), Namespace, ConstantTags);
+                _statsDClient = new DogStatsdService();
+                _statsDClient.Configure(new StatsdConfig
+                {
+                    Prefix = Namespace,
+                    ConstantTags = ConstantTags,
+                    StatsdServerName = Endpoint.Address.ToString(),
+                    StatsdPort = Endpoint.Port
+                });
             }
 
             [Benchmark]
             public void DatadogStatsD()
             {
-                for (int i = 0; i < Op; i += 1)
+                for (int i = 0; i < Operations; i += 1)
                 {
                     _datadogStatsD.Sample(i);
                 }
@@ -124,7 +130,7 @@ namespace DatadogStatsD.Benchmark
             [Benchmark]
             public void DatadogSharp()
             {
-                for (int i = 0; i < Op; i += 1)
+                for (int i = 0; i < Operations; i += 1)
                 {
                     _datadogSharp.Histogram(MetricName, i, SamplingRate, Tags);
                 }
@@ -133,9 +139,9 @@ namespace DatadogStatsD.Benchmark
             [Benchmark]
             public void StatsDClient()
             {
-                for (int i = 0; i < Op; i += 1)
+                for (int i = 0; i < Operations; i += 1)
                 {
-                    _statsDClient.Send<StatsdClient.Statsd.Histogram, long>(MetricName, i, SamplingRate, Tags);
+                    _statsDClient.Histogram(MetricName, i, SamplingRate, Tags);
                 }
             }
         }
