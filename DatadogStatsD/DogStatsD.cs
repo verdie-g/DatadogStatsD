@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Timers;
+using System.Threading.Tasks;
 using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
 using DatadogStatsD.Protocol;
@@ -17,7 +16,7 @@ namespace DatadogStatsD
     /// <summary>
     /// DogStatsD client.
     /// </summary>
-    public class DogStatsD : IDisposable
+    public class DogStatsD : IAsyncDisposable
     {
         // https://github.com/statsd/statsd/blob/master/docs/metric_types.md#multi-metric-packets
         private const int UdpPayloadSize = 1432;
@@ -189,12 +188,12 @@ namespace DatadogStatsD
         }
 
         /// <summary>
-        /// Releases all resources used by the current <see cref="DogStatsD"/> instance.
+        /// Flushes the buffered messages and releases all resources used by the current <see cref="DogStatsD"/> instance.
         /// </summary>
-        public void Dispose()
+        public ValueTask DisposeAsync()
         {
-            _transport.Dispose();
             _telemetry.Dispose();
+            return _transport.DisposeAsync();
         }
 
         private string PrependNamespace(string metricName)

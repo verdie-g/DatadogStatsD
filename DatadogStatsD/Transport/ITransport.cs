@@ -2,7 +2,7 @@ using System;
 
 namespace DatadogStatsD.Transport
 {
-    internal interface ITransport : IDisposable
+    internal interface ITransport : IAsyncDisposable
     {
         void Send(ArraySegment<byte> buffer);
         event Action<int> OnPacketSent;

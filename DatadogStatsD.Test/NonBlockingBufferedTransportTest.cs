@@ -133,21 +133,21 @@ namespace DatadogStatsD.Test
         }
 
         [Test]
-        public void DisposeReturnsCorrectly()
+        public async Task DisposeReturnsCorrectly()
         {
             var socket = new Mock<ISocket>();
             var transport = new NonBlockingBufferedTransport(socket.Object, 20, TimeSpan.FromMilliseconds(1000), 2);
-            transport.Dispose();
+            await transport.DisposeAsync();
         }
 
         [Test]
-        public void DisposeConsumesEntireQueue()
+        public async Task DisposeConsumesEntireQueue()
         {
             var socket = new Mock<ISocket>();
             var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(500), 2);
             transport.Send(CreateBuffer(7));
             transport.Send(CreateBuffer(7));
-            transport.Dispose();
+            await transport.DisposeAsync();
             VerifySendCalledWithBufferOfSize(socket, 7, Times.Exactly(2));
         }
 

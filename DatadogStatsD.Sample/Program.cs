@@ -10,7 +10,7 @@ namespace DatadogStatsD.Sample
     {
         static async Task Main()
         {
-            using var dog = new DogStatsD(new DogStatsDConfiguration
+            await using var dog = new DogStatsD(new DogStatsDConfiguration
             {
                 Namespace = "test",
                 ConstantTags = new[] { "env:dev" },

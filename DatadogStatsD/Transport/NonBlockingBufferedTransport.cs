@@ -47,12 +47,12 @@ namespace DatadogStatsD.Transport
             ArrayPool<byte>.Shared.Return(buffer.Array);
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
             _sendBuffersCancellation.Cancel();
             try
             {
-                _sendBuffersTask.GetAwaiter().GetResult();
+                await _sendBuffersTask;
             }
             catch (OperationCanceledException)
             {

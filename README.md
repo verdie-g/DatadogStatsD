@@ -22,13 +22,13 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
 ## Examples
 
 ```csharp
-using var dogStatsD = new DogStatsD();
+await using var dogStatsD = new DogStatsD();
 
 using var requests = dogStatsD.CreateCount("requests", new[] { "environment:dev" });
 exampleMetric.Increment();
 exampleMetric.Decrement();
 
-using var latency = dogStatsD.CreateHistogram("latency", sampleRate: 0.5);
+var latency = dogStatsD.CreateHistogram("latency", sampleRate: 0.5);
 exampleMetric2.Sample(5.423);
 exampleMetric2.Sample(1.27);
 
