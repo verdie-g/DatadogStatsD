@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
-using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Ticking;
 using DatadogStatsD.Transport;
@@ -14,8 +13,6 @@ namespace DatadogStatsD.Metrics
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types?tab=count#metric-types</remarks>
     public class Count : Metric
     {
-        private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Count);
-
         private readonly ITimer _tickTimer;
 
         private long _value;
@@ -26,6 +23,8 @@ namespace DatadogStatsD.Metrics
             _tickTimer = tickTimer;
             _tickTimer.Elapsed += OnTick;
         }
+
+        internal override MetricType MetricType => MetricType.Count;
 
         /// <summary>
         /// Increment the <see cref="Count"/>.
@@ -60,7 +59,7 @@ namespace DatadogStatsD.Metrics
             long delta = Interlocked.Exchange(ref _value, 0);
             if (delta != 0)
             {
-                Send(delta, TypeBytes);
+                Send(delta);
             }
         }
     }

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 
@@ -11,19 +10,19 @@ namespace DatadogStatsD.Metrics
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types?tab=distribution#metric-types</remarks>
     public class Distribution : Metric
     {
-        private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Distribution);
-
         internal Distribution(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
             : base(transport, telemetry, metricName, sampleRate, tags, true)
         {
         }
+
+        internal override MetricType MetricType => MetricType.Distribution;
 
         /// <summary>
         /// Record a global distribution value.
         /// </summary>
         public void Record(double value)
         {
-            Send(value, TypeBytes);
+            Send(value);
         }
     }
 }

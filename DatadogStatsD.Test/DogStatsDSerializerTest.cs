@@ -42,10 +42,9 @@ namespace DatadogStatsD.Test
             string expected)
         {
             byte[] nameBytes = DogStatsDSerializer.SerializeMetricName(name);
-            byte[] typeBytes = DogStatsDSerializer.SerializeMetricType(type);
             byte[]? sampleRateBytes = sampleRate != null ? DogStatsDSerializer.SerializeSampleRate(sampleRate.Value) : null;
             byte[] tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags?.Split(','));
-            var metricBytes = DogStatsDSerializer.SerializeMetric(nameBytes, value, typeBytes, sampleRateBytes, tagsBytes);
+            var metricBytes = DogStatsDSerializer.SerializeMetric(nameBytes, value, type, sampleRateBytes, tagsBytes);
             Assert.AreEqual(expected, Encoding.ASCII.GetString(metricBytes));
             ArrayPool<byte>.Shared.Return(metricBytes.Array!);
         }
@@ -109,12 +108,6 @@ namespace DatadogStatsD.Test
         public void SerializeMetricNameArgumentException(string name)
         {
             Assert.Throws<ArgumentException>(() => DogStatsDSerializer.SerializeMetricName(name));
-        }
-
-        [TestCase(10)]
-        public void SerializeMetricTypeArgumentException(MetricType type)
-        {
-            Assert.Throws<IndexOutOfRangeException>(() => DogStatsDSerializer.SerializeMetricType(type));
         }
 
         [TestCase(-0.5)]

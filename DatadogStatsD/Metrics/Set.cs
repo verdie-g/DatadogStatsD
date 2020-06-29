@@ -10,12 +10,12 @@ namespace DatadogStatsD.Metrics
     /// </summary>
     public class Set : Metric
     {
-        private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Set);
-
         internal Set(ITransport transport, ITelemetry telemetry, string metricName, IList<string>? tags)
             : base(transport, telemetry, metricName, 1.0, tags, false)
         {
         }
+
+        internal override MetricType MetricType => MetricType.Set;
 
         /// <summary>
         /// Adds the specified value to the set.
@@ -23,7 +23,7 @@ namespace DatadogStatsD.Metrics
         /// <param name="value">The value to add to the set.</param>
         public void Add(long value)
         {
-            Send(value, TypeBytes);
+            Send(value);
         }
     }
 }

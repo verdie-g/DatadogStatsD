@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Timers;
-using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Ticking;
 using DatadogStatsD.Transport;
@@ -14,8 +13,6 @@ namespace DatadogStatsD.Metrics
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types?tab=gauge#metric-types</remarks>
     public class Gauge : Metric
     {
-        private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Gauge);
-
         private readonly ITimer _tickTimer;
         private readonly Func<double> _evaluator;
 
@@ -27,6 +24,8 @@ namespace DatadogStatsD.Metrics
             _evaluator = evaluator;
             _tickTimer.Elapsed += OnTick;
         }
+
+        internal override MetricType MetricType => MetricType.Gauge;
 
         /// <summary>
         /// Break the bond between the <see cref="Count"/> and the <see cref="DogStatsD"/>. Not calling this method
@@ -40,7 +39,7 @@ namespace DatadogStatsD.Metrics
 
         private void OnTick(object? _, ElapsedEventArgs? __)
         {
-            Send(_evaluator(), TypeBytes);
+            Send(_evaluator());
         }
     }
 }

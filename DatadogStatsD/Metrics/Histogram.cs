@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 
@@ -12,17 +11,17 @@ namespace DatadogStatsD.Metrics
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types/?tab=histogram#metric-types</remarks>
     public class Histogram : Metric
     {
-        private static readonly byte[] TypeBytes = DogStatsDSerializer.SerializeMetricType(MetricType.Histogram);
-
         internal Histogram(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
             : base(transport, telemetry, metricName, sampleRate, tags, true)
         {
         }
 
+        internal override MetricType MetricType => MetricType.Histogram;
+
         [Obsolete("Use Sample instead")]
         public void Record(double value)
         {
-            Send(value, TypeBytes);
+            Send(value);
         }
 
         /// <summary>
@@ -31,7 +30,7 @@ namespace DatadogStatsD.Metrics
         /// <param name="value">The value.</param>
         public void Sample(double value)
         {
-            Send(value, TypeBytes);
+            Send(value);
         }
     }
 }
