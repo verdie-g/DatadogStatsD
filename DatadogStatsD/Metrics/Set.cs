@@ -11,7 +11,7 @@ namespace DatadogStatsD.Metrics
     public class Set : Metric
     {
         internal Set(ITransport transport, ITelemetry telemetry, string metricName, IList<string>? tags)
-            : base(transport, telemetry, metricName, 1.0, tags, false)
+            : base(transport, telemetry, metricName, 1.0, tags)
         {
         }
 

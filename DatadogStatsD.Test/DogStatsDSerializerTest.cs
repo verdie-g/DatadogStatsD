@@ -11,13 +11,13 @@ namespace DatadogStatsD.Test
 {
     internal class DogStatsDSerializerTest
     {
-        [TestCase("foo", 1.0, MetricType.Count, null, null, "foo:1|c")]
-        [TestCase("foo", 1.0, MetricType.Gauge, null, null, "foo:1|g")]
-        [TestCase("foo", 1.0, MetricType.Distribution, null, null, "foo:1|d")]
-        [TestCase("foo", 1.0, MetricType.Histogram, null, null, "foo:1|h")]
-        [TestCase("foo", 1.0, MetricType.Set, null, null, "foo:1|s")]
-        [TestCase("foo", -1.0, MetricType.Count, null, null, "foo:-1|c")]
-        [TestCase("foo", 9007199254740992, MetricType.Count, null, null, "foo:9007199254740992|c")]
+        [TestCase("foo", 1.0, MetricType.Count, 1.0, null, "foo:1|c")]
+        [TestCase("foo", 1.0, MetricType.Gauge, 1.0, null, "foo:1|g")]
+        [TestCase("foo", 1.0, MetricType.Distribution, 1.0, null, "foo:1|d")]
+        [TestCase("foo", 1.0, MetricType.Histogram, 1.0, null, "foo:1|h")]
+        [TestCase("foo", 1.0, MetricType.Set, 1.0, null, "foo:1|s")]
+        [TestCase("foo", -1.0, MetricType.Count, 1.0, null, "foo:-1|c")]
+        [TestCase("foo", 9007199254740992, MetricType.Count, 1.0, null, "foo:9007199254740992|c")]
         [TestCase("foo", 1.0, MetricType.Count, 1.0, null, "foo:1|c")]
         [TestCase("foo", 1.0, MetricType.Count, 0.1, null, "foo:1|c|@0.1")]
         [TestCase("foo", 1.0, MetricType.Count, 0.01, null, "foo:1|c|@0.01")]
@@ -25,24 +25,24 @@ namespace DatadogStatsD.Test
         [TestCase("foo", 1.0, MetricType.Count, 0.0001, null, "foo:1|c|@0.0001")]
         [TestCase("foo", 1.0, MetricType.Count, 0.00001, null, "foo:1|c|@1E-05")]
         [TestCase("foo", 1.0, MetricType.Count, 0.000001, null, "foo:1|c|@1E-06")]
-        [TestCase("foo", 1.0, MetricType.Count, null, "a,b:c,d", "foo:1|c|#a,b:c,d")]
-        [TestCase("foo", 1.0, MetricType.Histogram, null, null, "foo:1|h")]
-        [TestCase("foo", 12.0, MetricType.Histogram, null, null, "foo:12|h")]
-        [TestCase("foo", 123.0, MetricType.Histogram, null, null, "foo:123|h")]
-        [TestCase("foo", 1234.0, MetricType.Histogram, null, null, "foo:1234|h")]
-        [TestCase("foo", 0.1, MetricType.Histogram, null, null, "foo:0.1|h")]
-        [TestCase("foo", 0.12, MetricType.Histogram, null, null, "foo:0.12|h")]
-        [TestCase("foo", 0.123, MetricType.Histogram, null, null, "foo:0.123|h")]
-        [TestCase("foo", 0.1234, MetricType.Histogram, null, null, "foo:0.1234|h")]
-        [TestCase("foo", 0.12345, MetricType.Histogram, null, null, "foo:0.12345|h")]
-        [TestCase("foo", 0.123456, MetricType.Histogram, null, null, "foo:0.123456|h")]
-        [TestCase("foo", -1.123456789E-7, MetricType.Histogram, null, null, "foo:-1.123456789E-07|h")]
+        [TestCase("foo", 1.0, MetricType.Count, 1.0, "a,b:c,d", "foo:1|c|#a,b:c,d")]
+        [TestCase("foo", 1.0, MetricType.Histogram, 1.0, null, "foo:1|h")]
+        [TestCase("foo", 12.0, MetricType.Histogram, 1.0, null, "foo:12|h")]
+        [TestCase("foo", 123.0, MetricType.Histogram, 1.0, null, "foo:123|h")]
+        [TestCase("foo", 1234.0, MetricType.Histogram, 1.0, null, "foo:1234|h")]
+        [TestCase("foo", 0.1, MetricType.Histogram, 1.0, null, "foo:0.1|h")]
+        [TestCase("foo", 0.12, MetricType.Histogram, 1.0, null, "foo:0.12|h")]
+        [TestCase("foo", 0.123, MetricType.Histogram, 1.0, null, "foo:0.123|h")]
+        [TestCase("foo", 0.1234, MetricType.Histogram, 1.0, null, "foo:0.1234|h")]
+        [TestCase("foo", 0.12345, MetricType.Histogram, 1.0, null, "foo:0.12345|h")]
+        [TestCase("foo", 0.123456, MetricType.Histogram, 1.0, null, "foo:0.123456|h")]
+        [TestCase("foo", -1.123456789E-7, MetricType.Histogram, 1.0, null, "foo:-1.123456789E-07|h")]
         [TestCase("foo.bar_lol", -123456.789012, MetricType.Gauge, 0.123456, "a:b,cdef,fg:hij", "foo.bar_lol:-123456.789012|g|@0.123456|#a:b,cdef,fg:hij")]
-        public void SerializeMetric(string name, double value, MetricType type, double? sampleRate, string tags,
+        public void SerializeMetric(string name, double value, MetricType type, double sampleRate, string tags,
             string expected)
         {
             byte[] nameBytes = DogStatsDSerializer.SerializeMetricName(name);
-            byte[]? sampleRateBytes = sampleRate != null ? DogStatsDSerializer.SerializeSampleRate(sampleRate.Value) : null;
+            byte[] sampleRateBytes = DogStatsDSerializer.SerializeSampleRate(sampleRate);
             byte[] tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags?.Split(','));
             var metricBytes = DogStatsDSerializer.SerializeMetric(nameBytes, value, type, sampleRateBytes, tagsBytes);
             Assert.AreEqual(expected, Encoding.ASCII.GetString(metricBytes));

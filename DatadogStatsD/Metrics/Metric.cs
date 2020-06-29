@@ -18,21 +18,21 @@ namespace DatadogStatsD.Metrics
         private readonly string _metricName;
         private readonly byte[] _metricNameBytes;
         private readonly double _sampleRate;
-        private readonly byte[]? _sampleRateBytes;
+        private readonly byte[] _sampleRateBytes;
         private readonly IList<string>? _tags;
         private readonly byte[] _tagsBytes;
 
         internal abstract MetricType MetricType { get; }
 
         internal Metric(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate,
-            IList<string>? tags, bool includeSampleRate)
+            IList<string>? tags)
         {
             _transport = transport;
             _telemetry = telemetry;
             _metricName = metricName;
             _metricNameBytes = DogStatsDSerializer.SerializeMetricName(metricName);
             _sampleRate = sampleRate;
-            _sampleRateBytes = includeSampleRate ? DogStatsDSerializer.SerializeSampleRate(sampleRate) : null;
+            _sampleRateBytes = DogStatsDSerializer.SerializeSampleRate(sampleRate);
             _tags = tags;
             _tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags);
         }

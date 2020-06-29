@@ -12,7 +12,7 @@ namespace DatadogStatsD.Metrics
     public class Histogram : Metric
     {
         internal Histogram(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
-            : base(transport, telemetry, metricName, sampleRate, tags, true)
+            : base(transport, telemetry, metricName, sampleRate, tags)
         {
         }
 

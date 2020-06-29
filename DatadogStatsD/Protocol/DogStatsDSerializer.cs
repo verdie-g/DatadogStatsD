@@ -72,12 +72,12 @@ namespace DatadogStatsD.Protocol
         /// <param name="metricNameBytes">Serialized metric name built with <see cref="SerializeMetricName"/>.</param>
         /// <param name="value">Metric value.</param>
         /// <param name="metricType">Metric type.</param>
-        /// <param name="sampleRate">Serialized sample rate built with <see cref="SerializeSampleRate"/>. Can be null.</param>
+        /// <param name="sampleRate">Serialized sample rate built with <see cref="SerializeSampleRate"/>.</param>
         /// <param name="tagsBytes">Serialized tags built with <see cref="ValidateAndSerializeTags"/>.</param>
         /// <returns>A segment of a byte array containing the serialized metric. The array was loaned from
         /// <see cref="ArrayPool{T}.Shared"/> and must be returned once it's not used.</returns>
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics</remarks>
-        public static ArraySegment<byte> SerializeMetric(byte[] metricNameBytes, double value, MetricType metricType, byte[]? sampleRate, byte[] tagsBytes)
+        public static ArraySegment<byte> SerializeMetric(byte[] metricNameBytes, double value, MetricType metricType, byte[] sampleRate, byte[] tagsBytes)
         {
             byte[] metricTypeBytes = SerializeMetricType(metricType);
             int length = SerializedMetricLength(metricNameBytes, metricTypeBytes, sampleRate, tagsBytes);
@@ -91,7 +91,7 @@ namespace DatadogStatsD.Protocol
             stream.Write((byte)'|');
             stream.Write(metricTypeBytes);
 
-            if (sampleRate != null && !sampleRate.SequenceEqual(MaxSampleRateBytes))
+            if (!sampleRate.SequenceEqual(MaxSampleRateBytes))
             {
                 stream.Write(SampleRatePrefixBytes);
                 stream.Write(sampleRate);
@@ -350,11 +350,11 @@ namespace DatadogStatsD.Protocol
             return MetricTypeBytes[(int)type];
         }
 
-        private static int SerializedMetricLength(byte[] metricName, byte[] type, byte[]? sampleRate, byte[] tags)
+        private static int SerializedMetricLength(byte[] metricName, byte[] type, byte[] sampleRate, byte[] tags)
         {
             int length = metricName.Length + 1 + SerializedValueMaxLength + 1 + type.Length; // ':' + '|'
 
-            if (sampleRate != null && !sampleRate.SequenceEqual(MaxSampleRateBytes))
+            if (!sampleRate.SequenceEqual(MaxSampleRateBytes))
             {
                 length += SampleRatePrefixBytes.Length + sampleRate.Length;
             }

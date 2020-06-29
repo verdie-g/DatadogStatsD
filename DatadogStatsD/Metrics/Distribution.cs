@@ -11,7 +11,7 @@ namespace DatadogStatsD.Metrics
     public class Distribution : Metric
     {
         internal Distribution(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
-            : base(transport, telemetry, metricName, sampleRate, tags, true)
+            : base(transport, telemetry, metricName, sampleRate, tags)
         {
         }
 
