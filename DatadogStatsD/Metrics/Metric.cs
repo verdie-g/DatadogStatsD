@@ -66,7 +66,7 @@ namespace DatadogStatsD.Metrics
             return sb.ToString();
         }
 
-        internal void Send(double value)
+        private protected void Send(double value)
         {
             _telemetry.MetricSent();
 
