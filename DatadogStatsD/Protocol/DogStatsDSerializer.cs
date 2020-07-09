@@ -26,6 +26,8 @@ namespace DatadogStatsD.Protocol
         private static readonly int EventMessageMaxLengthWidth = IntegerWidth(EventMessageMaxLength);
         private static readonly string EventMessageLengthFormat = GenerateIntegerFormat(EventMessageMaxLengthWidth);
 
+        private const int EventAggregationKeyMaxLength = 100;
+
         private const string EventPrefix = "_e";
         private const string ServiceCheckPrefix = "_sc";
         private const string SampleRatePrefix = "|@";
@@ -155,7 +157,7 @@ namespace DatadogStatsD.Protocol
             if (aggregationKey != null)
             {
                 stream.Write(AggregationKeyPrefixBytes);
-                stream.WriteASCII(aggregationKey);
+                stream.WriteASCII(aggregationKey, Math.Min(aggregationKey.Length, EventAggregationKeyMaxLength));
             }
 
             if (sourceBytes.Length != 0)
@@ -387,7 +389,8 @@ namespace DatadogStatsD.Protocol
 
             if (aggregationKey != null)
             {
-                length += AggregationKeyPrefixBytes.Length + Encoding.ASCII.GetByteCount(aggregationKey);
+                length += AggregationKeyPrefixBytes.Length;
+                length += Encoding.ASCII.GetByteCount(aggregationKey, 0, Math.Min(aggregationKey.Length, EventAggregationKeyMaxLength));
             }
 
             if (source.Length != 0)

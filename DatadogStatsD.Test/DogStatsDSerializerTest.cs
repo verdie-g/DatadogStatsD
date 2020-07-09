@@ -136,5 +136,15 @@ namespace DatadogStatsD.Test
             string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
             Assert.AreEqual($"_e{{000,4000}}:|{message.Substring(0, 4000)}", serviceCheckStr);
         }
+
+        [Test]
+        public void EventAggregationKeyIsTruncated()
+        {
+            string aggregationKey = new string('a', 101);
+            var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, "", "", EventPriority.Normal,
+                Array.Empty<byte>(), aggregationKey, Array.Empty<byte>(), null);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            Assert.AreEqual($"_e{{000,0000}}:||k:{aggregationKey.Substring(0, 100)}", serviceCheckStr);
+        }
     }
 }
