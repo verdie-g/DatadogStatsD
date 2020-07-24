@@ -81,17 +81,19 @@ namespace DatadogStatsD.Telemetering
                 ClientTransportKey + ":" + transportName,
             }).ToArray();
 
-             _metricsCount = new Count(transport, this, tickTimer, MetricPrefix + "metrics", tags);
-             _eventsCount = new Count(transport, this, tickTimer, MetricPrefix + "events", tags);
-             _serviceChecksCount = new Count(transport, this, tickTimer, MetricPrefix + "service_checks", tags);
-             _bytesSentCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_sent", tags);
-             _bytesDroppedCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_dropped", tags);
-             _bytesDroppedQueueCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_dropped_queue", tags);
-             _bytesDroppedWriterCount = new Count(transport, this, tickTimer, MetricPrefix + "bytes_dropped_writer", tags);
-             _packetsSentCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_sent", tags);
-             _packetsDroppedCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_dropped", tags);
-             _packetsDroppedQueueCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_dropped_queue", tags);
-             _packetsDroppedWriterCount = new Count(transport, this, tickTimer, MetricPrefix + "packets_dropped_writer", tags);
+            var noopTelemetry = new NoopTelemetry(); // so that telemetry metrics aren't counted in telemetry
+
+            _metricsCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "metrics", tags);
+            _eventsCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "events", tags);
+            _serviceChecksCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "service_checks", tags);
+            _bytesSentCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "bytes_sent", tags);
+            _bytesDroppedCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "bytes_dropped", tags);
+            _bytesDroppedQueueCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "bytes_dropped_queue", tags);
+            _bytesDroppedWriterCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "bytes_dropped_writer", tags);
+            _packetsSentCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "packets_sent", tags);
+            _packetsDroppedCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "packets_dropped", tags);
+            _packetsDroppedQueueCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "packets_dropped_queue", tags);
+            _packetsDroppedWriterCount = new Count(transport, noopTelemetry, tickTimer, MetricPrefix + "packets_dropped_writer", tags);
         }
 
         public void MetricSent() => _metricsCount.Increment();
