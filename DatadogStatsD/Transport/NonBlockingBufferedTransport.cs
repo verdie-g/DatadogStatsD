@@ -149,7 +149,7 @@ namespace DatadogStatsD.Transport
             private CancellationTokenSource _bufferingCancellation;
             private int _size;
 
-            public ArraySegment<byte> Segment => new ArraySegment<byte>(_buffer, 0, _size == 0 ? 0 : _size - 1); // -1 for extra '\n'
+            public ArraySegment<byte> Segment => new ArraySegment<byte>(_buffer, 0, _size);
             public CancellationToken BufferingCancellation => _bufferingCancellation.Token;
 
             public BufferingContext(int maxBufferingSize, TimeSpan maxBufferingTime, CancellationToken cancellationToken)
@@ -157,7 +157,7 @@ namespace DatadogStatsD.Transport
                 _maxBufferingSize = maxBufferingSize;
                 _maxBufferingTime = maxBufferingTime;
                 _cancellationToken = cancellationToken;
-                _buffer = new byte[maxBufferingSize + 1]; // +1 for extra '\n'
+                _buffer = new byte[maxBufferingSize];
                 _stopwatch = new Stopwatch();
                 _bufferingCancellation = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken);
                 _size = 0;
@@ -170,16 +170,13 @@ namespace DatadogStatsD.Transport
                 Array.Copy(buffer.Array, 0, _buffer, _size, buffer.Count);
                 _size += buffer.Count;
 
-                if (_size <= _maxBufferingSize)
-                {
-                    _buffer[_size] = (byte)'\n';
-                    _size += 1;
-                }
+                _buffer[_size] = (byte)'\n';
+                _size += 1;
             }
 
             public bool Fits(ArraySegment<byte> buffer)
             {
-                return _size + buffer.Count <= _maxBufferingSize;
+                return _size + buffer.Count + 1 <= _maxBufferingSize; // +1 for '\n'
             }
 
             public void Reset()

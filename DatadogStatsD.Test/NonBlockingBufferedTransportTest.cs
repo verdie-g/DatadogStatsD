@@ -40,7 +40,7 @@ namespace DatadogStatsD.Test
             var socket = new Mock<ISocket>();
             var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(1000), 500);
 
-            transport.Send(CreateBuffer(10));
+            transport.Send(CreateBuffer(9));
             await Task.Delay(15);
             VerifySendCalledWithBufferOfSize(socket, 10, Times.Never());
             await Task.Delay(1500); // wait buffering timeout
@@ -51,14 +51,14 @@ namespace DatadogStatsD.Test
         public async Task TwoMessagesEqualToMaxBufferingSizeAreSentAfterBufferingTimeout()
         {
             var socket = new Mock<ISocket>();
-            var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(1000), 500);
+            var transport = new NonBlockingBufferedTransport(socket.Object, 11, TimeSpan.FromMilliseconds(1000), 500);
 
             transport.Send(CreateBuffer(5));
             transport.Send(CreateBuffer(4));
             await Task.Delay(15);
-            VerifySendCalledWithBufferOfSize(socket, 10, Times.Never());
+            VerifySendCalledWithBufferOfSize(socket, 11, Times.Never());
             await Task.Delay(1500); // wait buffering timeout
-            VerifySendCalledWithBufferOfSize(socket, 10, Times.Once());
+            VerifySendCalledWithBufferOfSize(socket, 11, Times.Once());
         }
 
         [Test]
@@ -67,10 +67,10 @@ namespace DatadogStatsD.Test
             var socket = new Mock<ISocket>();
             var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(1000), 500);
 
-            transport.Send(CreateBuffer(10));
+            transport.Send(CreateBuffer(9));
             await Task.Delay(15);
             VerifySendCalledWithBufferOfSize(socket, 10, Times.Never());
-            transport.Send(CreateBuffer(9));
+            transport.Send(CreateBuffer(8));
             await Task.Delay(15); // wait dequeue
             VerifySendCalledWithBufferOfSize(socket, 10, Times.Once());
             VerifySendCalledWithBufferOfSize(socket, 9, Times.Never());
@@ -80,16 +80,16 @@ namespace DatadogStatsD.Test
         public async Task TwoMessagesEqualToMaxBufferingSizeAreSentWhenAnotherIsDequeued()
         {
             var socket = new Mock<ISocket>();
-            var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(1000), 500);
+            var transport = new NonBlockingBufferedTransport(socket.Object, 11, TimeSpan.FromMilliseconds(1000), 500);
 
             transport.Send(CreateBuffer(5));
             transport.Send(CreateBuffer(4));
             await Task.Delay(15);
-            VerifySendCalledWithBufferOfSize(socket, 10, Times.Never());
-            transport.Send(CreateBuffer(9));
+            VerifySendCalledWithBufferOfSize(socket, 11, Times.Never());
+            transport.Send(CreateBuffer(3));
             await Task.Delay(15); // wait dequeue
-            VerifySendCalledWithBufferOfSize(socket, 10, Times.Once());
-            VerifySendCalledWithBufferOfSize(socket, 9, Times.Never());
+            VerifySendCalledWithBufferOfSize(socket, 11, Times.Once());
+            VerifySendCalledWithBufferOfSize(socket, 4, Times.Never());
         }
 
         [Test]
@@ -98,7 +98,7 @@ namespace DatadogStatsD.Test
             var socket = new Mock<ISocket>();
             var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(1000), 500);
 
-            transport.Send(CreateBuffer(9));
+            transport.Send(CreateBuffer(8));
             await Task.Delay(15);
             VerifySendCalledWithBufferOfSize(socket, 9, Times.Never());
             await Task.Delay(1500); // wait buffering timeout
@@ -125,9 +125,9 @@ namespace DatadogStatsD.Test
 
             var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(1000), 2);
 
-            transport.Send(CreateBuffer(10));
+            transport.Send(CreateBuffer(9));
             await Task.Delay(1500); // wait buffering timeout
-            transport.Send(CreateBuffer(10));
+            transport.Send(CreateBuffer(9));
             await Task.Delay(4000); // wait two buffering timeout
             VerifySendCalledWithBufferOfSize(socket, 10, Times.Exactly(2));
         }
@@ -148,7 +148,7 @@ namespace DatadogStatsD.Test
             transport.Send(CreateBuffer(7));
             transport.Send(CreateBuffer(7));
             await transport.DisposeAsync();
-            VerifySendCalledWithBufferOfSize(socket, 7, Times.Exactly(2));
+            VerifySendCalledWithBufferOfSize(socket, 8, Times.Exactly(2));
         }
 
         private ArraySegment<byte> CreateBuffer(int size)
