@@ -55,14 +55,9 @@ namespace DatadogStatsD.Metrics
                 return sb.ToString();
             }
 
-            sb.Append("[");
-            foreach (string tag in _tags)
-            {
-                sb.Append(tag + ",");
-            }
-
-            sb.Length -= 1; // remove last comma
-            sb.Append("]");
+            sb.Append('[');
+            sb.AppendJoin(',', _tags);
+            sb.Append(']');
             return sb.ToString();
         }
 
