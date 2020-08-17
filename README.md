@@ -25,12 +25,12 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
 await using var dogStatsD = new DogStatsD();
 
 using var requests = dogStatsD.CreateCount("requests", new[] { "environment:dev" });
-exampleMetric.Increment();
-exampleMetric.Decrement();
+requests.Increment();
+requests.Decrement();
 
 var latency = dogStatsD.CreateHistogram("latency", sampleRate: 0.5);
-exampleMetric2.Sample(5.423);
-exampleMetric2.Sample(1.27);
+latency.Sample(5.423);
+latency.Sample(1.27);
 
 using var threads = dogStatsD.CreateGauge("threads", () => Process.GetCurrentProcess().Threads.Count);
 
