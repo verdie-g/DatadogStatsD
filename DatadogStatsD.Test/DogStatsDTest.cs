@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using DatadogStatsD.Events;
 using DatadogStatsD.Metrics;
+using DatadogStatsD.ServiceChecks;
 using NUnit.Framework;
 
 namespace DatadogStatsD.Test
@@ -14,6 +16,12 @@ namespace DatadogStatsD.Test
         public void ConstructorWithDefaultConfigurationShouldntThrow()
         {
             Assert.DoesNotThrow(() => new DogStatsD());
+        }
+
+        [Test]
+        public void ConstructorWithNullEndPointShouldThrow()
+        {
+            Assert.Throws<ArgumentNullException>(() => new DogStatsD(new DogStatsDConfiguration { EndPoint = null! }));
         }
 
         [TestCase(MetricType.Count, "")]
@@ -31,6 +39,17 @@ namespace DatadogStatsD.Test
         {
             var dog = new DogStatsD();
             Assert.Throws<ArgumentException>(() => CreateMetric(dog, type, name, 1.0, Tags));
+        }
+
+        [TestCase(MetricType.Count)]
+        [TestCase(MetricType.Distribution)]
+        [TestCase(MetricType.Gauge)]
+        [TestCase(MetricType.Histogram)]
+        [TestCase(MetricType.Set)]
+        public void NullMetricNameShouldThrow(MetricType type)
+        {
+            var dog = new DogStatsD();
+            Assert.Throws<ArgumentNullException>(() => CreateMetric(dog, type, null!, 1.0, Tags));
         }
 
         [TestCase(MetricType.Count, "a")]
@@ -93,6 +112,34 @@ namespace DatadogStatsD.Test
         {
             var dog = new DogStatsD();
             Assert.DoesNotThrow(() => CreateMetric(dog, type, MetricName, 1.0, new[] { tag }));
+        }
+
+        [Test]
+        public void RaiseEventNullTitleShouldThrow()
+        {
+            var dog = new DogStatsD();
+            Assert.Throws<ArgumentNullException>(() => dog.RaiseEvent(AlertType.Info, null!, ""));
+        }
+
+        [Test]
+        public void RaiseEventNullMessageShouldThrow()
+        {
+            var dog = new DogStatsD();
+            Assert.Throws<ArgumentNullException>(() => dog.RaiseEvent(AlertType.Info, "", null!));
+        }
+
+        [Test]
+        public void SendServiceCheckNullNameShouldThrow()
+        {
+            var dog = new DogStatsD();
+            Assert.Throws<ArgumentNullException>(() => dog.SendServiceCheck(null!, CheckStatus.Ok));
+        }
+
+        [Test]
+        public void SendServiceCheckNullMessageShouldThrow()
+        {
+            var dog = new DogStatsD();
+            Assert.Throws<ArgumentNullException>(() => dog.SendServiceCheck("", CheckStatus.Ok, null!));
         }
 
         private Metric CreateMetric(DogStatsD dog, MetricType type, string name, double sampleRate, IList<string>? tags)

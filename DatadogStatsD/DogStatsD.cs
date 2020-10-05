@@ -49,7 +49,8 @@ namespace DatadogStatsD
         /// </summary>
         public DogStatsD(DogStatsDConfiguration conf)
         {
-            _conf = conf;
+            _conf = conf ?? throw new ArgumentNullException(nameof(conf));
+            conf.EndPoint = conf.EndPoint ?? throw new ArgumentNullException(nameof(conf.EndPoint));
             _namespaceBytes = conf.Namespace != null ? DogStatsDSerializer.SerializeMetricName(conf.Namespace) : Array.Empty<byte>();
             _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(_conf.ConstantTags);
 
@@ -168,6 +169,9 @@ namespace DatadogStatsD
         public void RaiseEvent(AlertType alertType, string title, string message, EventPriority priority = EventPriority.Normal,
             string? aggregationKey = null, IList<string>? tags = null)
         {
+            title = title ?? throw new ArgumentNullException(nameof(title));
+            message = message ?? throw new ArgumentNullException(nameof(message));
+
             _telemetry.EventSent();
             _transport.Send(DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, SourceBytes,
                 aggregationKey, _constantTagsBytes, tags));
@@ -182,6 +186,9 @@ namespace DatadogStatsD
         /// <param name="tags">A list of tags to apply to the service check. They are appended to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public void SendServiceCheck(string name, CheckStatus checkStatus, string message = "", IList<string>? tags = null)
         {
+            name = name ?? throw new ArgumentNullException(nameof(name));
+            message = message ?? throw new ArgumentNullException(nameof(message));
+
             _telemetry.ServiceCheckSent();
             _transport.Send(DogStatsDSerializer.SerializeServiceCheck(_namespaceBytes, name, checkStatus, message,
                 _constantTagsBytes, tags));
@@ -198,6 +205,9 @@ namespace DatadogStatsD
 
         private string PrependNamespace(string metricName)
         {
+            // Use this method, which is used in all methods to create metrics, to check if the user didn't respect the contract
+            metricName = metricName ?? throw new ArgumentNullException(nameof(metricName));
+
             return string.IsNullOrEmpty(_conf.Namespace)
                 ? metricName
                 : _conf.Namespace + "." + metricName;
