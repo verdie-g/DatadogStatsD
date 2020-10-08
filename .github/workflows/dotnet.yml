@@ -1,4 +1,4 @@
-name: Server
+name: Build & Test
 
 on: [push]
 
@@ -9,11 +9,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET Core
+    - name: Setup .NET Core 2
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '2.1.810' # SDK Version
+    - name: Setup .NET Core 3
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '3.1.100' # SDK Version
     - name: Build
       run: dotnet build --configuration Release DatadogStatsD
     - name: Test
-      run: dotnet test
+      run: dotnet test DatadogStatsD.Test
