@@ -136,12 +136,18 @@ namespace DatadogStatsD.Protocol
             // go back to lengthIndex to write the lengths
             int lengthEndPosition = stream.Position;
             stream.Seek(lengthStartPosition, SeekOrigin.Begin);
+#if NETSTANDARD2_0
+            stream.WriteASCII(titleLength.ToString(EventTitleLengthFormat));
+            stream.Write((byte)',');
+            stream.WriteASCII(messageLength.ToString(EventMessageLengthFormat));
+#else
             Span<char> lengthString = stackalloc char[EventMessageMaxLengthWidth];
             titleLength.TryFormat(lengthString, out int lengthStringLength, EventTitleLengthFormat);
             stream.WriteASCII(lengthString.Slice(0, lengthStringLength));
             stream.Write((byte)',');
             messageLength.TryFormat(lengthString, out lengthStringLength, EventMessageLengthFormat);
             stream.WriteASCII(lengthString.Slice(0, lengthStringLength));
+#endif
             stream.Seek(lengthEndPosition, SeekOrigin.Begin);
 
             if (priority != EventPriority.Normal)
@@ -280,7 +286,7 @@ namespace DatadogStatsD.Protocol
                 throw new ArgumentException("Tag should start with a letter");
             }
 
-            if (tag[^1] == ':')
+            if (tag[tag.Length - 1] == ':')
             {
                 throw new ArgumentException("Tag cannot end with a colon");
             }
@@ -332,6 +338,12 @@ namespace DatadogStatsD.Protocol
         private static void WriteValue(double value, ref DogStatsDStream stream)
         {
             bool isValueWhole = Math.Round(value) == value;
+#if NETSTANDARD2_0
+            string valueStr = isValueWhole
+                ? ((long) value).ToString(CultureInfo.InvariantCulture)
+                : value.ToString("G", CultureInfo.InvariantCulture);
+            stream.WriteASCII(valueStr);
+#else
             Span<char> valueChars = stackalloc char[SerializedValueMaxLength];
             int valueCharsLength;
             if (isValueWhole)
@@ -345,6 +357,7 @@ namespace DatadogStatsD.Protocol
 
             valueChars = valueChars.Slice(0, valueCharsLength);
             stream.WriteASCII(valueChars);
+#endif
         }
 
         private static byte[] SerializeMetricType(MetricType type)
@@ -374,8 +387,13 @@ namespace DatadogStatsD.Protocol
         {
             // _e{<TITLE>.length,<TEXT>.length}:<TITLE>|<TEXT>
             int length = EventPrefixBytes.Length + 1 + EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth + 2
+#if NETSTANDARD2_0 // No GetByteCount(string, int, int) in .NET Standard 2.0
+                         + Encoding.UTF8.GetByteCount(title.Substring(0, Math.Min(title.Length, EventTitleMaxLength))) + 1
+                         + Encoding.UTF8.GetByteCount(message.Substring(0, Math.Min(message.Length, EventMessageMaxLength)));
+#else
                          + Encoding.UTF8.GetByteCount(title, 0, Math.Min(title.Length, EventTitleMaxLength)) + 1
                          + Encoding.UTF8.GetByteCount(message, 0, Math.Min(message.Length, EventMessageMaxLength));
+#endif
 
             if (priority != EventPriority.Normal)
             {
@@ -390,7 +408,11 @@ namespace DatadogStatsD.Protocol
             if (aggregationKey != null)
             {
                 length += AggregationKeyPrefixBytes.Length;
+#if NETSTANDARD2_0 // No GetByteCount(string, int, int) in .NET Standard 2.0
+                length += Encoding.ASCII.GetByteCount(aggregationKey.Substring(0, Math.Min(aggregationKey.Length, EventAggregationKeyMaxLength)));
+#else
                 length += Encoding.ASCII.GetByteCount(aggregationKey, 0, Math.Min(aggregationKey.Length, EventAggregationKeyMaxLength));
+#endif
             }
 
             if (source.Length != 0)
@@ -508,6 +530,7 @@ namespace DatadogStatsD.Protocol
                 return written;
             }
 
+#if !NETSTANDARD2_0
             public int WriteASCII(Span<char> chars)
             {
                 var bufferSpan = new Span<byte>(_buffer, Position, _buffer.Length - Position);
@@ -515,6 +538,7 @@ namespace DatadogStatsD.Protocol
                 Position += written;
                 return written;
             }
+#endif
 
             public int WriteUTF8(string s)
             {

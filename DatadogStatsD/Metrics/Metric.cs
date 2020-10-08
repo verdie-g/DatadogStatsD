@@ -56,7 +56,21 @@ namespace DatadogStatsD.Metrics
             }
 
             sb.Append('[');
+#if NETSTANDARD2_0
+            foreach (string tag in _tags)
+            {
+                sb.Append(tag);
+                sb.Append(',');
+            }
+
+            // Remove last comma
+            if (_tags.Count != 0)
+            {
+                sb.Length -= 1;
+            }
+#else
             sb.AppendJoin(',', _tags);
+#endif
             sb.Append(']');
             return sb.ToString();
         }

@@ -16,7 +16,12 @@ namespace DatadogStatsD
     /// <summary>
     /// DogStatsD client.
     /// </summary>
-    public class DogStatsD : IAsyncDisposable
+    public class DogStatsD
+#if NETSTANDARD2_0
+        : IDisposable
+#else
+        : IAsyncDisposable
+#endif
     {
         // https://github.com/statsd/statsd/blob/master/docs/metric_types.md#multi-metric-packets
         private const int UdpPayloadSize = 1432;
@@ -197,11 +202,19 @@ namespace DatadogStatsD
         /// <summary>
         /// Flushes the buffered messages and releases all resources used by the current <see cref="DogStatsD"/> instance.
         /// </summary>
+#if NETSTANDARD2_0
+        public void Dispose()
+        {
+            _telemetry.Dispose();
+            _transport.Dispose();
+        }
+#else
         public ValueTask DisposeAsync()
         {
             _telemetry.Dispose();
             return _transport.DisposeAsync();
         }
+#endif
 
         private string PrependNamespace(string metricName)
         {

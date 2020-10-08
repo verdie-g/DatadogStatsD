@@ -15,7 +15,7 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
   Metrics to monitor communication between the agent and this client
 
 ## Installation
-[DatadogStatsD](https://www.nuget.org/packages/DatadogStatsD) targets .NET Standard 2.1.
+[DatadogStatsD](https://www.nuget.org/packages/DatadogStatsD) targets both .NET Standard 2.0 & 2.1.
 
 `dotnet add package DatadogStatsD`
 

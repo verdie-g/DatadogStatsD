@@ -44,8 +44,8 @@ namespace DatadogStatsD.Test
             byte[] nameBytes = DogStatsDSerializer.SerializeMetricName(name);
             byte[] sampleRateBytes = DogStatsDSerializer.SerializeSampleRate(sampleRate);
             byte[] tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags?.Split(','));
-            var metricBytes = DogStatsDSerializer.SerializeMetric(nameBytes, value, type, sampleRateBytes, tagsBytes);
-            Assert.AreEqual(expected, Encoding.ASCII.GetString(metricBytes));
+            ArraySegment<byte> metricBytes = DogStatsDSerializer.SerializeMetric(nameBytes, value, type, sampleRateBytes, tagsBytes);
+            Assert.AreEqual(expected, Encoding.ASCII.GetString(metricBytes.Array!, metricBytes.Offset, metricBytes.Count));
             ArrayPool<byte>.Shared.Return(metricBytes.Array!);
         }
 
@@ -69,7 +69,7 @@ namespace DatadogStatsD.Test
             byte[] constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(constantTags?.Split(','));
             string[]? extraTagsList = extraTags?.Split(',');
             var eventBytes= DogStatsDSerializer.SerializeEvent(alertType, title, message, priority, sourceBytes, aggregationKey, constantTagsBytes, extraTagsList);
-            string eventStr = Encoding.UTF8.GetString(eventBytes);
+            string eventStr = Encoding.UTF8.GetString(eventBytes.Array!, eventBytes.Offset, eventBytes.Count);
             Assert.AreEqual(expected, eventStr);
             ArrayPool<byte>.Shared.Return(eventBytes.Array!);
         }
@@ -92,7 +92,7 @@ namespace DatadogStatsD.Test
             byte[] constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(constantTags?.Split(','));
             string[]? extraTagsList = extraTags?.Split(',');
             var serviceCheckBytes = DogStatsDSerializer.SerializeServiceCheck(nsBytes, name, checkStatus, message, constantTagsBytes, extraTagsList);
-            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes.Array!, serviceCheckBytes.Offset, serviceCheckBytes.Count);
             Assert.AreEqual(expected, serviceCheckStr);
             ArrayPool<byte>.Shared.Return(serviceCheckBytes.Array!);
         }
@@ -123,7 +123,7 @@ namespace DatadogStatsD.Test
             string title = new string('a', 101);
             var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, title, "", EventPriority.Normal,
                 Array.Empty<byte>(), null, Array.Empty<byte>(), null);
-            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes.Array!, serviceCheckBytes.Offset, serviceCheckBytes.Count);
             Assert.AreEqual($"_e{{100,0000}}:{title.Substring(0, 100)}|", serviceCheckStr);
         }
 
@@ -133,7 +133,7 @@ namespace DatadogStatsD.Test
             string message = new string('a', 4001);
             var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, "", message, EventPriority.Normal,
                 Array.Empty<byte>(), null, Array.Empty<byte>(), null);
-            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes.Array!, serviceCheckBytes.Offset, serviceCheckBytes.Count);
             Assert.AreEqual($"_e{{000,4000}}:|{message.Substring(0, 4000)}", serviceCheckStr);
         }
 
@@ -143,7 +143,7 @@ namespace DatadogStatsD.Test
             string aggregationKey = new string('a', 101);
             var serviceCheckBytes = DogStatsDSerializer.SerializeEvent(AlertType.Info, "", "", EventPriority.Normal,
                 Array.Empty<byte>(), aggregationKey, Array.Empty<byte>(), null);
-            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes);
+            string serviceCheckStr = Encoding.UTF8.GetString(serviceCheckBytes.Array!, serviceCheckBytes.Offset, serviceCheckBytes.Count);
             Assert.AreEqual($"_e{{000,0000}}:||k:{aggregationKey.Substring(0, 100)}", serviceCheckStr);
         }
     }

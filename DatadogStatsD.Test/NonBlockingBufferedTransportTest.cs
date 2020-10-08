@@ -137,7 +137,11 @@ namespace DatadogStatsD.Test
         {
             var socket = new Mock<ISocket>();
             var transport = new NonBlockingBufferedTransport(socket.Object, 20, TimeSpan.FromMilliseconds(1000), 2);
+#if NETCOREAPP2_1
+            transport.Dispose();
+#else
             await transport.DisposeAsync();
+#endif
         }
 
         [Test]
@@ -147,7 +151,11 @@ namespace DatadogStatsD.Test
             var transport = new NonBlockingBufferedTransport(socket.Object, 10, TimeSpan.FromMilliseconds(500), 2);
             transport.Send(CreateBuffer(7));
             transport.Send(CreateBuffer(7));
+#if NETCOREAPP2_1
+            transport.Dispose();
+#else
             await transport.DisposeAsync();
+#endif
             VerifySendCalledWithBufferOfSize(socket, 8, Times.Exactly(2));
         }
 

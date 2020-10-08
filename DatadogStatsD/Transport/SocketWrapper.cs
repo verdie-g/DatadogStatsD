@@ -23,7 +23,11 @@ namespace DatadogStatsD.Transport
                 _underlyingSocket = CreateSocket(_endpoint);
             }
 
-            _underlyingSocket.Send(buffer, SocketFlags.None);
+#if NETSTANDARD2_0
+            _underlyingSocket.Send(new[] { buffer });
+#else
+            _underlyingSocket.Send(buffer);
+#endif
         }
 
         public void Dispose()

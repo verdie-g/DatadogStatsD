@@ -47,12 +47,20 @@ namespace DatadogStatsD.Transport
             ArrayPool<byte>.Shared.Return(buffer.Array);
         }
 
+#if NETSTANDARD2_0
+        public void Dispose()
+#else
         public async ValueTask DisposeAsync()
+#endif
         {
             _sendBuffersCancellation.Cancel();
             try
             {
+#if NETSTANDARD2_0
+                _sendBuffersTask.GetAwaiter().GetResult();
+#else
                 await _sendBuffersTask;
+#endif
             }
             catch (OperationCanceledException)
             {
@@ -167,7 +175,7 @@ namespace DatadogStatsD.Transport
 
             public void Append(ArraySegment<byte> buffer)
             {
-                Array.Copy(buffer.Array, 0, _buffer, _size, buffer.Count);
+                Array.Copy(buffer.Array!, 0, _buffer, _size, buffer.Count);
                 _size += buffer.Count;
 
                 _buffer[_size] = (byte)'\n';
