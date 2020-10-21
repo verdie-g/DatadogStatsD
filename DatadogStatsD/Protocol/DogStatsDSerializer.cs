@@ -99,7 +99,7 @@ namespace DatadogStatsD.Protocol
                 stream.Write(sampleRate);
             }
 
-            if (tagsBytes != null && tagsBytes.Length != 0)
+            if (tagsBytes.Length != 0)
             {
                 stream.Write(TagsPrefixBytes);
                 stream.Write(tagsBytes);
@@ -374,7 +374,7 @@ namespace DatadogStatsD.Protocol
                 length += SampleRatePrefixBytes.Length + sampleRate.Length;
             }
 
-            if (tags != null && tags.Length != 0)
+            if (tags.Length != 0)
             {
                 length += TagsPrefixBytes.Length + tags.Length;
             }
