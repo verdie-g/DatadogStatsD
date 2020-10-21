@@ -49,22 +49,22 @@ Sources can be found in [DatadogStatsD.Benchmark](https://github.com/verdie-g/Da
 
 ### Count & Gauge
 
-|        Method |          Mean |        Error |       StdDev |     Gen 0 |    Gen 1 |    Gen 2 | Allocated |
-|-------------- |--------------:|-------------:|-------------:|----------:|---------:|---------:|----------:|
-| DatadogStatsD |      55.41 us |     0.273 us |     0.242 us |         - |        - |        - |         - |
-|  DatadogSharp | 140,563.34 us | 1,540.997 us | 1,441.449 us | 1750.0000 |        - |        - | 5599762 B |
-|  StatsDClient |   9,535.01 us |   187.826 us |   348.147 us | 1671.8750 | 531.2500 | 109.3750 | 6089620 B |
+|        Method |         Mean |      Error |     StdDev |     Gen 0 |  Gen 1 | Gen 2 | Allocated |
+|-------------- |-------------:|-----------:|-----------:|----------:|-------:|------:|----------:|
+| DatadogStatsD |     80.90 us |   0.099 us |   0.093 us |         - |      - |     - |         - |
+|  DatadogSharp | 85,855.51 us | 406.704 us | 380.431 us | 3000.0000 |      - |     - | 4879261 B |
+|  StatsDClient |  2,577.34 us |  43.403 us |  36.244 us |  574.2188 | 3.9063 |     - |  902065 B |
 
 This library aggregates for 10 seconds ([DogStatsD flush interval](https://docs.datadoghq.com/developers/dogstatsd/data_aggregation/#how-is-aggregation-performed-with-the-dogstatsd-server))
 counts and gauges, so for 10000 increments, one packet is sent, hence the ~0 bytes allocated.
 
 ### Histogram, Set, Distribution
 
-|        Method |       Mean |     Error |    StdDev |     Gen 0 |    Gen 1 |    Gen 2 |  Allocated |
-|-------------- |-----------:|----------:|----------:|----------:|---------:|---------:|-----------:|
-| DatadogStatsD |   5.024 ms | 0.0657 ms | 0.0615 ms |         - |        - |        - |    1.18 KB |
-|  DatadogSharp | 140.095 ms | 0.9445 ms | 0.8835 ms | 1750.0000 |        - |        - | 5468.24 KB |
-|  StatsDClient |   9.951 ms | 0.1976 ms | 0.4658 ms | 1671.8750 | 515.6250 | 109.3750 | 5945.63 KB |
+|        Method |      Mean |     Error |    StdDev |     Gen 0 |  Gen 1 | Gen 2 | Allocated |
+|-------------- |----------:|----------:|----------:|----------:|-------:|------:|----------:|
+| DatadogStatsD |  2.464 ms | 0.0485 ms | 0.0696 ms |         - |      - |     - |     750 B |
+|  DatadogSharp | 86.875 ms | 0.4703 ms | 0.4399 ms | 3000.0000 |      - |     - | 4879381 B |
+|  StatsDClient |  2.558 ms | 0.0478 ms | 0.0423 ms |  574.2188 | 3.9063 |     - |  901430 B |
 
 For those metrics, the library lets DogStatsD agent do the aggregation, so with a sample rate of 1.0, each call to
 Histogram.Update will be sent to the agent.
