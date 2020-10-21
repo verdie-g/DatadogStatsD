@@ -18,14 +18,12 @@ namespace DatadogStatsD.Metrics
 
         internal Gauge(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName,
             Func<double> evaluator, IList<string>? tags)
-            : base(transport, telemetry, metricName, 1.0, tags)
+            : base(transport, telemetry, metricName, MetricType.Gauge, 1.0, tags)
         {
             _tickTimer = tickTimer;
             _evaluator = evaluator;
             _tickTimer.Elapsed += OnTick;
         }
-
-        internal override MetricType MetricType => MetricType.Gauge;
 
         /// <summary>
         /// Break the bond between the <see cref="Count"/> and the <see cref="DogStatsD"/>. Not calling this method

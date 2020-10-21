@@ -11,11 +11,9 @@ namespace DatadogStatsD.Metrics
     public class Histogram : Metric
     {
         internal Histogram(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
-            : base(transport, telemetry, metricName, sampleRate, tags)
+            : base(transport, telemetry, metricName, MetricType.Histogram, sampleRate, tags)
         {
         }
-
-        internal override MetricType MetricType => MetricType.Histogram;
 
         /// <summary>
         /// Samples a new value for current <see cref="Histogram"/> instance.

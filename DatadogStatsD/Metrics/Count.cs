@@ -18,13 +18,11 @@ namespace DatadogStatsD.Metrics
         private long _value;
 
         internal Count(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName, IList<string>? tags)
-            : base(transport, telemetry, metricName, 1.0, tags)
+            : base(transport, telemetry, metricName, MetricType.Count, 1.0, tags)
         {
             _tickTimer = tickTimer;
             _tickTimer.Elapsed += OnTick;
         }
-
-        internal override MetricType MetricType => MetricType.Count;
 
         /// <summary>
         /// Increment the <see cref="Count"/>.

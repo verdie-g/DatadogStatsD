@@ -38,13 +38,12 @@ namespace DatadogStatsD.Test
         [TestCase("foo", 0.123456, MetricType.Histogram, 1.0, null, "foo:0.123456|h")]
         [TestCase("foo", -1.123456789E-7, MetricType.Histogram, 1.0, null, "foo:-1.123456789E-07|h")]
         [TestCase("foo.bar_lol", -123456.789012, MetricType.Gauge, 0.123456, "a:b,cdef,fg:hij", "foo.bar_lol:-123456.789012|g|@0.123456|#a:b,cdef,fg:hij")]
-        public void SerializeMetric(string name, double value, MetricType type, double sampleRate, string tags,
+        public void SerializeMetric(string name, double value, MetricType type, double sampleRate, string? tags,
             string expected)
         {
-            byte[] nameBytes = DogStatsDSerializer.SerializeMetricName(name);
-            byte[] sampleRateBytes = DogStatsDSerializer.SerializeSampleRate(sampleRate);
-            byte[] tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags?.Split(','));
-            ArraySegment<byte> metricBytes = DogStatsDSerializer.SerializeMetric(nameBytes, value, type, sampleRateBytes, tagsBytes);
+            byte[] prefixBytes = DogStatsDSerializer.SerializeMetricPrefix(name);
+            byte[] suffixBytes = DogStatsDSerializer.SerializeMetricSuffix(type, sampleRate, tags?.Split(','));
+            ArraySegment<byte> metricBytes = DogStatsDSerializer.SerializeMetric(prefixBytes, value, suffixBytes);
             Assert.AreEqual(expected, Encoding.ASCII.GetString(metricBytes.Array!, metricBytes.Offset, metricBytes.Count));
             ArrayPool<byte>.Shared.Return(metricBytes.Array!);
         }
@@ -114,7 +113,7 @@ namespace DatadogStatsD.Test
         [TestCase(1.5)]
         public void SerializeSampleRateArgumentException(double sampleRate)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => DogStatsDSerializer.SerializeSampleRate(sampleRate));
+            Assert.Throws<ArgumentOutOfRangeException>(() => DogStatsDSerializer.ValidateAndSerializeSampleRate(sampleRate));
         }
 
         [Test]

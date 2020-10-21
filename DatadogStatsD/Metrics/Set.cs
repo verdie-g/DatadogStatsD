@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using DatadogStatsD.Protocol;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
 
@@ -11,11 +10,9 @@ namespace DatadogStatsD.Metrics
     public class Set : Metric
     {
         internal Set(ITransport transport, ITelemetry telemetry, string metricName, IList<string>? tags)
-            : base(transport, telemetry, metricName, 1.0, tags)
+            : base(transport, telemetry, metricName, MetricType.Set, 1.0, tags)
         {
         }
-
-        internal override MetricType MetricType => MetricType.Set;
 
         /// <summary>
         /// Adds the specified value to the set.

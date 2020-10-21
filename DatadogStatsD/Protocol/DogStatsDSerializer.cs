@@ -16,7 +16,6 @@ namespace DatadogStatsD.Protocol
         private const int MetricNameMaxLength = 200;
         private const int TagMaxLength = 200;
         private static readonly int SerializedValueMaxLength = double.MinValue.ToString(CultureInfo.InvariantCulture).Length;
-        private static readonly byte[] MaxSampleRateBytes = SerializeSampleRate(1.0);
 
         private const int EventTitleMaxLength = 100;
         private static readonly int EventTitleMaxLengthWidth = IntegerWidth(EventTitleMaxLength);
@@ -71,42 +70,52 @@ namespace DatadogStatsD.Protocol
         /// <summary>
         /// Serialize a metric with its value from pre-serialized parts.
         /// </summary>
-        /// <param name="metricNameBytes">Serialized metric name built with <see cref="SerializeMetricName"/>.</param>
+        /// <param name="metricPrefixBytes">Serialized metric prefix built with <see cref="SerializeMetricPrefix"/>.</param>
         /// <param name="value">Metric value.</param>
-        /// <param name="metricType">Metric type.</param>
-        /// <param name="sampleRate">Serialized sample rate built with <see cref="SerializeSampleRate"/>.</param>
-        /// <param name="tagsBytes">Serialized tags built with <see cref="ValidateAndSerializeTags"/>.</param>
+        /// <param name="metricSuffixBytes">Serialized metric suffix built with <see cref="SerializeMetricSuffix"/>.</param>
         /// <returns>A segment of a byte array containing the serialized metric. The array was loaned from
         /// <see cref="ArrayPool{T}.Shared"/> and must be returned once it's not used.</returns>
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics</remarks>
-        public static ArraySegment<byte> SerializeMetric(byte[] metricNameBytes, double value, MetricType metricType, byte[] sampleRate, byte[] tagsBytes)
+        public static ArraySegment<byte> SerializeMetric(byte[] metricPrefixBytes, double value, byte[] metricSuffixBytes)
         {
-            byte[] metricTypeBytes = SerializeMetricType(metricType);
-            int length = SerializedMetricLength(metricNameBytes, metricTypeBytes, sampleRate, tagsBytes);
+            int length = metricPrefixBytes.Length + SerializedValueMaxLength + metricSuffixBytes.Length;
             var stream = new DogStatsDStream(length);
 
             // <METRIC_NAME>:<VALUE>|<TYPE>|@<SAMPLE_RATE>|#<TAGS>
-
-            stream.Write(metricNameBytes);
-            stream.Write((byte)':');
+            stream.Write(metricPrefixBytes);
             WriteValue(value, ref stream);
-            stream.Write((byte)'|');
-            stream.Write(metricTypeBytes);
+            stream.Write(metricSuffixBytes);
 
-            if (!sampleRate.SequenceEqual(MaxSampleRateBytes))
-            {
-                stream.Write(SampleRatePrefixBytes);
-                stream.Write(sampleRate);
-            }
-
-            if (tagsBytes.Length != 0)
-            {
-                stream.Write(TagsPrefixBytes);
-                stream.Write(tagsBytes);
-            }
-
-            // wrap array in a segment because ArrayPool can return a larger array than "length"
             return stream.GetBuffer();
+        }
+
+        public static byte[] SerializeMetricPrefix(string metricName)
+        {
+            // <METRIC_NAME>:
+            return SerializeMetricName(metricName).Append((byte)':').ToArray();
+        }
+
+        public static byte[] SerializeMetricSuffix(MetricType metricType, double sampleRate, IList<string>? tags)
+        {
+            // |<TYPE>|@<SAMPLE_RATE>|#<TAGS>
+            IEnumerable<byte> bytes = Enumerable.Empty<byte>();
+
+            bytes = bytes.Append((byte)'|');
+            bytes = bytes.Concat(SerializeMetricType(metricType));
+
+            if (sampleRate != 1.0)
+            {
+                bytes = bytes.Concat(SampleRatePrefixBytes);
+                bytes = bytes.Concat(ValidateAndSerializeSampleRate(sampleRate));
+            }
+
+            if (tags != null && tags.Count != 0)
+            {
+                bytes = bytes.Concat(TagsPrefixBytes);
+                bytes = bytes.Concat(ValidateAndSerializeTags(tags));
+            }
+
+            return bytes.ToArray();
         }
 
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=events</remarks>
@@ -237,7 +246,7 @@ namespace DatadogStatsD.Protocol
             return Encoding.ASCII.GetBytes(metricName);
         }
 
-        public static byte[] SerializeSampleRate(double sampleRate)
+        public static byte[] ValidateAndSerializeSampleRate(double sampleRate)
         {
             if (sampleRate < 0.0 || sampleRate > 1.0)
             {
@@ -363,23 +372,6 @@ namespace DatadogStatsD.Protocol
         private static byte[] SerializeMetricType(MetricType type)
         {
             return MetricTypeBytes[(int)type];
-        }
-
-        private static int SerializedMetricLength(byte[] metricName, byte[] type, byte[] sampleRate, byte[] tags)
-        {
-            int length = metricName.Length + 1 + SerializedValueMaxLength + 1 + type.Length; // ':' + '|'
-
-            if (!sampleRate.SequenceEqual(MaxSampleRateBytes))
-            {
-                length += SampleRatePrefixBytes.Length + sampleRate.Length;
-            }
-
-            if (tags.Length != 0)
-            {
-                length += TagsPrefixBytes.Length + tags.Length;
-            }
-
-            return length;
         }
 
         private static int SerializedEventLength(AlertType alertType, string title, string message, EventPriority priority,

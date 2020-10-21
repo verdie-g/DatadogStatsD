@@ -11,11 +11,9 @@ namespace DatadogStatsD.Metrics
     public class Distribution : Metric
     {
         internal Distribution(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<string>? tags)
-            : base(transport, telemetry, metricName, sampleRate, tags)
+            : base(transport, telemetry, metricName, MetricType.Distribution, sampleRate, tags)
         {
         }
-
-        internal override MetricType MetricType => MetricType.Distribution;
 
         /// <summary>
         /// Record a global distribution value.

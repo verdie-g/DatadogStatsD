@@ -16,25 +16,30 @@ namespace DatadogStatsD.Metrics
         private readonly ITelemetry _telemetry;
 
         private readonly string _metricName;
-        private readonly byte[] _metricNameBytes;
         private readonly double _sampleRate;
-        private readonly byte[] _sampleRateBytes;
         private readonly IList<string>? _tags;
-        private readonly byte[] _tagsBytes;
 
-        internal abstract MetricType MetricType { get; }
+        /// <summary>
+        /// Everything before the value (namespace + name).
+        /// </summary>
+        private readonly byte[] _metricPrefixBytes;
 
-        internal Metric(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate,
-            IList<string>? tags)
+        /// <summary>
+        /// Everything after the value (type + sample rate + tags).
+        /// </summary>
+        private readonly byte[] _metricSuffixBytes;
+
+        internal Metric(ITransport transport, ITelemetry telemetry, string metricName, MetricType metricType,
+            double sampleRate, IList<string>? tags)
         {
             _transport = transport;
             _telemetry = telemetry;
             _metricName = metricName;
-            _metricNameBytes = DogStatsDSerializer.SerializeMetricName(metricName);
             _sampleRate = sampleRate;
-            _sampleRateBytes = DogStatsDSerializer.SerializeSampleRate(sampleRate);
             _tags = tags;
-            _tagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(tags);
+
+            _metricPrefixBytes = DogStatsDSerializer.SerializeMetricPrefix(metricName);
+            _metricSuffixBytes = DogStatsDSerializer.SerializeMetricSuffix(metricType, sampleRate, tags);
         }
 
         /// <summary>
@@ -82,8 +87,7 @@ namespace DatadogStatsD.Metrics
             if (!Sampling.Sample(_sampleRate))
                 return;
 
-            var metricBytes = DogStatsDSerializer.SerializeMetric(_metricNameBytes, value, MetricType,
-                _sampleRateBytes, _tagsBytes);
+            var metricBytes = DogStatsDSerializer.SerializeMetric(_metricPrefixBytes, value, _metricSuffixBytes);
             _transport.Send(metricBytes);
         }
     }
