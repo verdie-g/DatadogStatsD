@@ -95,7 +95,7 @@ namespace DatadogStatsD.Protocol
             return SerializeMetricName(metricName).Append((byte)':').ToArray();
         }
 
-        public static byte[] SerializeMetricSuffix(MetricType metricType, double sampleRate, IList<string>? tags)
+        public static byte[] SerializeMetricSuffix(MetricType metricType, double sampleRate, IList<KeyValuePair<string, string>>? tags)
         {
             // |<TYPE>|@<SAMPLE_RATE>|#<TAGS>
             IEnumerable<byte> bytes = Enumerable.Empty<byte>();
@@ -120,9 +120,9 @@ namespace DatadogStatsD.Protocol
 
         /// <remarks>Documentation: https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=events</remarks>
         public static ArraySegment<byte> SerializeEvent(AlertType alertType, string title, string message, EventPriority priority,
-            byte[] sourceBytes, string? aggregationKey, byte[] constantTagsBytes, IList<string>? tags)
+            byte[] sourceBytes, string? aggregationKey, byte[] constantTagsBytes, IList<KeyValuePair<string, string>>? tags)
         {
-            tags ??= Array.Empty<string>();
+            tags ??= Array.Empty<KeyValuePair<string, string>>();
             title = EscapeNewLines(title);
             message = EscapeNewLines(message);
 
@@ -187,10 +187,10 @@ namespace DatadogStatsD.Protocol
         }
 
         public static ArraySegment<byte> SerializeServiceCheck(byte[] namespaceBytes, string name, CheckStatus checkStatus, string message,
-            byte[] constantTagsBytes, IList<string>? extraTags)
+            byte[] constantTagsBytes, IList<KeyValuePair<string, string>>? extraTags)
         {
             message = EscapeNewLines(message).Replace("m:", "m\\:");
-            extraTags ??= Array.Empty<string>();
+            extraTags ??= Array.Empty<KeyValuePair<string, string>>();
 
             int length = SerializedServiceCheckLength(namespaceBytes, name, message, constantTagsBytes, extraTags);
             var stream = new DogStatsDStream(length);
@@ -261,7 +261,7 @@ namespace DatadogStatsD.Protocol
             return source != null ? Encoding.ASCII.GetBytes(source) : Array.Empty<byte>();
         }
 
-        public static byte[] ValidateAndSerializeTags(IList<string>? tags)
+        public static byte[] ValidateAndSerializeTags(IList<KeyValuePair<string, string>>? tags)
         {
             if (tags == null || tags.Count == 0)
             {
@@ -274,38 +274,42 @@ namespace DatadogStatsD.Protocol
             return stream.GetBuffer().Array;
         }
 
-        private static void ValidateTags(IList<string> tags)
+        private static void ValidateTags(IList<KeyValuePair<string, string>> tags)
         {
-            foreach (string tag in tags)
+            foreach (var tag in tags)
             {
                 ValidateTag(tag);
             }
         }
 
         /// <remarks>Documentation: https://docs.datadoghq.com/tagging</remarks>
-        private static void ValidateTag(string tag)
+        private static void ValidateTag(KeyValuePair<string, string> tag)
         {
-            if (string.IsNullOrEmpty(tag))
+            if (string.IsNullOrEmpty(tag.Key))
             {
-                throw new ArgumentException("Tag can't be empty");
+                throw new ArgumentException("Tag key can't be null nor empty");
             }
 
-            if (!char.IsLetter(tag[0]))
+            if (!char.IsLetter(tag.Key[0]))
             {
-                throw new ArgumentException("Tag should start with a letter");
+                throw new ArgumentException("Tag key should start with a letter");
             }
 
-            if (tag[tag.Length - 1] == ':')
+            if (tag.Key.Length + (string.IsNullOrEmpty(tag.Value) ? 0 : 1 + tag.Value.Length) > TagMaxLength)
             {
-                throw new ArgumentException("Tag cannot end with a colon");
+                throw new ArgumentException($"Tag exceeds {TagMaxLength} characters");
             }
 
-            if (tag.Length > TagMaxLength)
+            ValidateTagPart(tag.Key);
+            if (!string.IsNullOrEmpty(tag.Value))
             {
-                throw new ArgumentException($"Tag exceeds ${TagMaxLength} characters");
+                ValidateTagPart(tag.Value!);
             }
+        }
 
-            foreach (char c in tag)
+        private static void ValidateTagPart(string part)
+        {
+            foreach (char c in part)
             {
                 if (c >= 128 || (!char.IsLetterOrDigit(c) && c != '_' && c != '-' && c != ':' && c != '.' && c != '/'))
                 {
@@ -314,7 +318,7 @@ namespace DatadogStatsD.Protocol
             }
         }
 
-        private static void WriteConstantAndExtraTags(byte[] constantTagsBytes, IList<string> tags,
+        private static void WriteConstantAndExtraTags(byte[] constantTagsBytes, IList<KeyValuePair<string, string>> tags,
             ref DogStatsDStream stream)
         {
              if (constantTagsBytes.Length == 0 && tags.Count == 0)
@@ -332,11 +336,17 @@ namespace DatadogStatsD.Protocol
              WriteTags(tags, ref stream);
         }
 
-        private static void WriteTags(IList<string> tags, ref DogStatsDStream stream)
+        private static void WriteTags(IList<KeyValuePair<string, string>> tags, ref DogStatsDStream stream)
         {
             for (int i = 0; i < tags.Count; i += 1)
             {
-                stream.WriteASCII(tags[i]);
+                stream.WriteASCII(tags[i].Key);
+                if (!string.IsNullOrEmpty(tags[i].Value))
+                {
+                    stream.Write((byte)':');
+                    stream.WriteASCII(tags[i].Value);
+                }
+
                 if (i < tags.Count - 1)
                 {
                     stream.Write((byte)',');
@@ -375,7 +385,7 @@ namespace DatadogStatsD.Protocol
         }
 
         private static int SerializedEventLength(AlertType alertType, string title, string message, EventPriority priority,
-            byte[] source, string? aggregationKey, byte[] constantTagsBytes, IList<string> extraTags)
+            byte[] source, string? aggregationKey, byte[] constantTagsBytes, IList<KeyValuePair<string, string>> extraTags)
         {
             // _e{<TITLE>.length,<TEXT>.length}:<TITLE>|<TEXT>
             int length = EventPrefixBytes.Length + 1 + EventTitleMaxLengthWidth + 1 + EventMessageMaxLengthWidth + 2
@@ -418,7 +428,7 @@ namespace DatadogStatsD.Protocol
         }
 
         private static int SerializedServiceCheckLength(byte[] namespaceBytes, string name, string message,
-            byte[] constantTagsBytes, IList<string> extraTags)
+            byte[] constantTagsBytes, IList<KeyValuePair<string, string>> extraTags)
         {
             // _sc|<NAMESPACE>.<NAME>|<STATUS>|#<TAG_KEY_1>:<TAG_VALUE_1>,<TAG_2>|m:<SERVICE_CHECK_MESSAGE>
             int length = ServiceCheckPrefixBytes.Length + 1;
@@ -438,7 +448,7 @@ namespace DatadogStatsD.Protocol
             return length;
         }
 
-        private static int SerializedConstantAndExtraTagsLength(byte[] constantTagsBytes, IList<string> extraTags)
+        private static int SerializedConstantAndExtraTagsLength(byte[] constantTagsBytes, IList<KeyValuePair<string, string>> extraTags)
         {
             int length = 0;
             if (constantTagsBytes.Length != 0 || extraTags.Count != 0)
@@ -454,7 +464,7 @@ namespace DatadogStatsD.Protocol
             return length + constantTagsBytes.Length + SerializedTagsLength(extraTags);
         }
 
-        private static int SerializedTagsLength(IList<string> tags)
+        private static int SerializedTagsLength(IList<KeyValuePair<string, string>> tags)
         {
             if (tags.Count == 0)
             {
@@ -463,9 +473,9 @@ namespace DatadogStatsD.Protocol
 
             // 1 byte per character + comma between tags
             int length = tags.Count - 1; // commas
-            foreach (string tag in tags)
+            foreach (var tag in tags)
             {
-                length += tag.Length;
+                length += tag.Key.Length + (string.IsNullOrEmpty(tag.Value) ? 0 : 1 + tag.Value.Length);
             }
 
             return length;

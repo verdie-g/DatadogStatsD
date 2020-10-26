@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using DatadogStatsD.Events;
@@ -13,7 +14,7 @@ namespace DatadogStatsD.Sample
             await using var dog = new DogStatsD(new DogStatsDConfiguration
             {
                 Namespace = "test",
-                ConstantTags = new[] { "env:dev" },
+                ConstantTags = new[] { KeyValuePair.Create("env", "dev") },
             });
 
             const int delay = 50;
@@ -35,12 +36,12 @@ namespace DatadogStatsD.Sample
                 if (i % (2000 / delay) == 0)
                 {
                     dog.RaiseEvent((AlertType)rdn.Next(3), "Bad thing happened " + i, "The cloud transpilation to Rust failed",
-                        (EventPriority)rdn.Next(1), "rust_fail", new[] { "extratag" });
+                        (EventPriority)rdn.Next(1), "rust_fail", new[] { KeyValuePair.Create("extratag", "") });
                 }
 
                 if (i % (5000 / delay) == 0)
                 {
-                    dog.SendServiceCheck("is_connected", (CheckStatus)rdn.Next(3), "A message", new[] { "extratag" });
+                    dog.SendServiceCheck("is_connected", (CheckStatus)rdn.Next(3), "A message", new[] { KeyValuePair.Create("extratag", "") });
                 }
 
                 await Task.Delay(delay);

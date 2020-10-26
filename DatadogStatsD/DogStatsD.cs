@@ -75,7 +75,7 @@ namespace DatadogStatsD
             var socket = new SocketWrapper(_conf.EndPoint);
             _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
             _telemetry = _conf.Telemetry
-                ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer, _conf.ConstantTags ?? Array.Empty<string>())
+                ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer, _conf.ConstantTags ?? Array.Empty<KeyValuePair<string, string>>())
                 : (ITelemetry)new NoopTelemetry();
             _transport.OnPacketSent += size => _telemetry.PacketSent(size);
             _transport.OnPacketDropped += (size, queue) => _telemetry.PacketDropped(size, queue);
@@ -86,7 +86,7 @@ namespace DatadogStatsD
         /// </summary>
         /// <param name="metricName">Name of the metric.</param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Count CreateCount(string metricName, IList<string>? tags = null)
+        public Count CreateCount(string metricName, IList<KeyValuePair<string, string>>? tags = null)
         {
             return new Count(
                 _transport,
@@ -102,7 +102,7 @@ namespace DatadogStatsD
         /// <param name="metricName">Name of the metric.</param>
         /// <param name="sampleRate">Sample rate to apply to the metric. Takes a value between 0 (everything is sampled, so nothing is sent) and 1 (no sample).</param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
+        public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<KeyValuePair<string, string>>? tags = null)
         {
             return new Histogram(
                 _transport,
@@ -122,7 +122,7 @@ namespace DatadogStatsD
         /// with <see cref="Gauge.Update"/>, it will be used over what <paramref name="evaluator"/> returns.
         /// </param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Gauge CreateGauge(string metricName, Func<double>? evaluator = null, IList<string>? tags = null)
+        public Gauge CreateGauge(string metricName, Func<double>? evaluator = null, IList<KeyValuePair<string, string>>? tags = null)
         {
             return new Gauge(
                 _transport,
@@ -139,7 +139,7 @@ namespace DatadogStatsD
         /// <param name="metricName">Name of the metric.</param>
         /// <param name="sampleRate">Sample rate to apply to the metric. Takes a value between 0 (everything is sampled, so nothing is sent) and 1 (no sample).</param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Distribution CreateDistribution(string metricName, double sampleRate = 1.0, IList<string>? tags = null)
+        public Distribution CreateDistribution(string metricName, double sampleRate = 1.0, IList<KeyValuePair<string, string>>? tags = null)
         {
             return new Distribution(
                 _transport,
@@ -154,7 +154,7 @@ namespace DatadogStatsD
         /// </summary>
         /// <param name="metricName">Name of the metric.</param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Set CreateSet(string metricName, IList<string>? tags = null)
+        public Set CreateSet(string metricName, IList<KeyValuePair<string, string>>? tags = null)
         {
             return new Set(
                 _transport,
@@ -177,7 +177,7 @@ namespace DatadogStatsD
         /// </param>
         /// <param name="tags">A list of tags to apply to the event. They are appended to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public void RaiseEvent(AlertType alertType, string title, string message, EventPriority priority = EventPriority.Normal,
-            string? aggregationKey = null, IList<string>? tags = null)
+            string? aggregationKey = null, IList<KeyValuePair<string, string>>? tags = null)
         {
             title = title ?? throw new ArgumentNullException(nameof(title));
             message = message ?? throw new ArgumentNullException(nameof(message));
@@ -194,7 +194,7 @@ namespace DatadogStatsD
         /// <param name="checkStatus">The check status.</param>
         /// <param name="message">A message describing the current state of the service check.</param>
         /// <param name="tags">A list of tags to apply to the service check. They are appended to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public void SendServiceCheck(string name, CheckStatus checkStatus, string message = "", IList<string>? tags = null)
+        public void SendServiceCheck(string name, CheckStatus checkStatus, string message = "", IList<KeyValuePair<string, string>>? tags = null)
         {
             name = name ?? throw new ArgumentNullException(nameof(name));
             message = message ?? throw new ArgumentNullException(nameof(message));
@@ -231,7 +231,7 @@ namespace DatadogStatsD
                 : _conf.Namespace + "." + metricName;
         }
 
-        private IList<string>? PrependConstantTags(IList<string>? tags)
+        private IList<KeyValuePair<string, string>>? PrependConstantTags(IList<KeyValuePair<string, string>>? tags)
         {
             if (_conf.ConstantTags == null || _conf.ConstantTags.Count == 0)
             {

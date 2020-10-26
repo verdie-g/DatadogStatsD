@@ -20,7 +20,7 @@ namespace DatadogStatsD.Metrics
         private double _value = double.NaN; // NaN indicates that no value was recorded.
 
         internal Gauge(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName,
-            Func<double>? evaluator, IList<string>? tags)
+            Func<double>? evaluator, IList<KeyValuePair<string, string>>? tags)
             : base(transport, telemetry, metricName, MetricType.Gauge, 1.0, tags)
         {
             _tickTimer = tickTimer;

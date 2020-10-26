@@ -31,13 +31,13 @@ await using var dogStatsD = new DogStatsD(new DogStatsDConfiguration
 {
     EndPoint = new UnixDomainSocketEndPoint("/path/to/unix.socket"),
     Namespace = "foo",
-    ConstantTags = new[] { "service:service_foo" },
+    ConstantTags = new[] { KeyValuePair.Create("service", "service_foo") },
 });
 
 // Create a COUNT metric named "requests" with the tag "environment:dev". The method
 // throws if the metric name or tags are invalid (e.g. too long, invalid characters)
 // to avoid using metrics that won't be accepted by the agent.
-using var requests = dogStatsD.CreateCount("requests", new[] { "environment:dev" });
+using var requests = dogStatsD.CreateCount("requests", new[] { KeyValuePair.Create("env", "dev") });
 requests.Increment(); // requests++
 requests.Decrement(); // requests--
 // Because counters are aggregated client-side, nothing is sent here since the metric

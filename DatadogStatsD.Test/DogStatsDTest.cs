@@ -10,7 +10,11 @@ namespace DatadogStatsD.Test
     internal class DogStatsDTest
     {
         private const string MetricName = "toto";
-        private static readonly string[] Tags = { "a", "b" };
+        private static readonly KeyValuePair<string, string>[] Tags =
+        {
+            KeyValuePair.Create("a", ""),
+            KeyValuePair.Create("b", ""),
+        };
 
         [Test]
         public void ConstructorWithDefaultConfigurationShouldntThrow()
@@ -97,7 +101,7 @@ namespace DatadogStatsD.Test
         public void InvalidTagsShouldThrow(MetricType type, string tag)
         {
             var dog = new DogStatsD();
-            Assert.Throws<ArgumentException>(() => CreateMetric(dog, type, MetricName, 1.0, new[] { tag }));
+            Assert.Throws<ArgumentException>(() => CreateMetric(dog, type, MetricName, 1.0, TestHelper.ParseTags(tag)));
         }
 
         [TestCase(MetricType.Count, "a1")]
@@ -111,7 +115,7 @@ namespace DatadogStatsD.Test
         public void ValidTagsShouldNotThrow(MetricType type, string tag)
         {
             var dog = new DogStatsD();
-            Assert.DoesNotThrow(() => CreateMetric(dog, type, MetricName, 1.0, new[] { tag }));
+            Assert.DoesNotThrow(() => CreateMetric(dog, type, MetricName, 1.0, TestHelper.ParseTags(tag)));
         }
 
         [Test]
@@ -142,7 +146,7 @@ namespace DatadogStatsD.Test
             Assert.Throws<ArgumentNullException>(() => dog.SendServiceCheck("", CheckStatus.Ok, null!));
         }
 
-        private Metric CreateMetric(DogStatsD dog, MetricType type, string name, double sampleRate, IList<string>? tags)
+        private Metric CreateMetric(DogStatsD dog, MetricType type, string name, double sampleRate, IList<KeyValuePair<string, string>>? tags)
         {
             return type switch
             {

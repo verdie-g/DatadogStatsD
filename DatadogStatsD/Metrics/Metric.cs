@@ -17,7 +17,7 @@ namespace DatadogStatsD.Metrics
 
         private readonly string _metricName;
         private readonly double _sampleRate;
-        private readonly IList<string>? _tags;
+        private readonly IList<KeyValuePair<string, string>>? _tags;
 
         /// <summary>
         /// Everything before the value (namespace + name).
@@ -30,7 +30,7 @@ namespace DatadogStatsD.Metrics
         private readonly byte[] _metricSuffixBytes;
 
         internal Metric(ITransport transport, ITelemetry telemetry, string metricName, MetricType metricType,
-            double sampleRate, IList<string>? tags)
+            double sampleRate, IList<KeyValuePair<string, string>>? tags)
         {
             _transport = transport;
             _telemetry = telemetry;
@@ -61,10 +61,15 @@ namespace DatadogStatsD.Metrics
             }
 
             sb.Append('[');
-#if NETSTANDARD2_0
-            foreach (string tag in _tags)
+            foreach (var tag in _tags)
             {
-                sb.Append(tag);
+                sb.Append(tag.Key);
+                if (!string.IsNullOrEmpty(tag.Value))
+                {
+                    sb.Append(':');
+                    sb.Append(tag.Value);
+                }
+
                 sb.Append(',');
             }
 
@@ -73,9 +78,6 @@ namespace DatadogStatsD.Metrics
             {
                 sb.Length -= 1;
             }
-#else
-            sb.AppendJoin(',', _tags);
-#endif
             sb.Append(']');
             return sb.ToString();
         }

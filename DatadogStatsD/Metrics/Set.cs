@@ -21,7 +21,7 @@ namespace DatadogStatsD.Metrics
         /// <remarks>ConcurrentDictionary used as a concurrent set.</remarks>
         private ConcurrentDictionary<long, bool> _values;
 
-        internal Set(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName, IList<string>? tags)
+        internal Set(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName, IList<KeyValuePair<string, string>>? tags)
             : base(transport, telemetry, metricName, MetricType.Set, 1.0, tags)
         {
             _tickTimer = tickTimer;

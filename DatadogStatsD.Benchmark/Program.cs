@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
@@ -42,8 +45,8 @@ namespace DatadogStatsD.Benchmark
                 {
                     EndPoint = Endpoint,
                     Namespace = Namespace,
-                    ConstantTags = ConstantTags,
-                }).CreateCount(MetricName, Tags);
+                    ConstantTags = ParseTags(ConstantTags).ToArray(),
+                }).CreateCount(MetricName, ParseTags(Tags).ToArray());
 
                 _datadogSharp = new DatadogSharp.DogStatsd.DatadogStats(Endpoint.Address.ToString(), Endpoint.Port,
                     Namespace, ConstantTags);
@@ -103,8 +106,8 @@ namespace DatadogStatsD.Benchmark
                 {
                     EndPoint = Endpoint,
                     Namespace = Namespace,
-                    ConstantTags = ConstantTags,
-                }).CreateHistogram(MetricName, 1.0, Tags);
+                    ConstantTags = ParseTags(ConstantTags).ToArray(),
+                }).CreateHistogram(MetricName, 1.0, ParseTags(Tags).ToArray());
 
                 _datadogSharp = new DatadogSharp.DogStatsd.DatadogStats(Endpoint.Address.ToString(), Endpoint.Port,
                     Namespace, ConstantTags);
@@ -143,6 +146,17 @@ namespace DatadogStatsD.Benchmark
                 {
                     _dogStatsDService.Histogram(MetricName, i, SamplingRate, Tags);
                 }
+            }
+        }
+
+        public static IEnumerable<KeyValuePair<string, string>> ParseTags(IEnumerable<string> tags)
+        {
+            foreach (string tag in tags)
+            {
+                var parts = tag.Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
+                string key = parts[0];
+                string value = parts.Length > 1 ? parts[1] : string.Empty;
+                yield return KeyValuePair.Create(key, value);
             }
         }
     }

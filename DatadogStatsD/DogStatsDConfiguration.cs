@@ -22,9 +22,9 @@ namespace DatadogStatsD
         public string? Namespace { get; set; }
 
         /// <summary>
-        /// Tags to apply to all metrics, events, and service checks.
+        /// Tags to apply to all metrics, events, and service checks. The value of a tag can be empty.
         /// </summary>
-        public IList<string>? ConstantTags { get; set; }
+        public IList<KeyValuePair<string, string>>? ConstantTags { get; set; }
 
         /// <summary>
         /// Enabled telemetry. Defaults to true.

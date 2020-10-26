@@ -11,7 +11,11 @@ namespace DatadogStatsD.Test.Metrics
     public class DistributionTest
     {
         private const string MetricName = "toto";
-        private static readonly IList<string> Tags = new[] { "abc:def", "ghi" };
+        private static readonly IList<KeyValuePair<string, string>> Tags = new[]
+        {
+            KeyValuePair.Create("abc", "def"),
+            KeyValuePair.Create("ghi", ""),
+        };
 
         [Test]
         public void RecordShouldSentBytesToTransport()

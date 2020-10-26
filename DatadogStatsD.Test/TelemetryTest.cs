@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,7 @@ namespace DatadogStatsD.Test
         {
             var transport = new Mock<ITransport>();
             var timer = new ManualTimer();
-            var telemetry = new Telemetry("udp", transport.Object, timer, Array.Empty<string>());
+            var telemetry = new Telemetry("udp", transport.Object, timer, Array.Empty<KeyValuePair<string, string>>());
 
             telemetry.MetricSent();
             telemetry.EventSent();

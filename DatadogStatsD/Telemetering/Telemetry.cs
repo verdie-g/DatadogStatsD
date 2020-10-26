@@ -13,7 +13,7 @@ namespace DatadogStatsD.Telemetering
     {
         private const string MetricPrefix = "datadog.dogstatsd.client.";
 
-        private const string ClientTag = "client:cs";
+        private static readonly KeyValuePair<string, string> ClientTag = new KeyValuePair<string, string>("client", "cs");
         private const string ClientVersionKey = "client_version";
         private const string ClientTransportKey = "client_transport";
 
@@ -72,13 +72,13 @@ namespace DatadogStatsD.Telemetering
         /// </summary>
         private readonly Count _packetsDroppedWriterCount;
 
-        public Telemetry(string transportName, ITransport transport, ITimer tickTimer, IList<string> constantTags)
+        public Telemetry(string transportName, ITransport transport, ITimer tickTimer, IList<KeyValuePair<string, string>> constantTags)
         {
             var tags = constantTags.Concat(new[]
             {
                 ClientTag,
-                ClientVersionKey + ":" + FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion,
-                ClientTransportKey + ":" + transportName,
+                new KeyValuePair<string, string>(ClientVersionKey, FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion),
+                new KeyValuePair<string, string>(ClientTransportKey, transportName),
             }).ToArray();
 
             var noopTelemetry = new NoopTelemetry(); // so that telemetry metrics aren't counted in telemetry
