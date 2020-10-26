@@ -31,7 +31,7 @@ namespace DatadogStatsD.Benchmark
 
             private Metrics.Count _datadogStatsD;
             private DatadogSharp.DogStatsd.DatadogStats _datadogSharp;
-            private DogStatsdService _statsDClient;
+            private DogStatsdService _dogStatsDService;
 
             [GlobalSetup]
             public void GlobalSetup()
@@ -47,8 +47,8 @@ namespace DatadogStatsD.Benchmark
 
                 _datadogSharp = new DatadogSharp.DogStatsd.DatadogStats(Endpoint.Address.ToString(), Endpoint.Port,
                     Namespace, ConstantTags);
-                _statsDClient = new DogStatsdService();
-                _statsDClient.Configure(new StatsdConfig
+                _dogStatsDService = new DogStatsdService();
+                _dogStatsDService.Configure(new StatsdConfig
                 {
                     Prefix = Namespace,
                     ConstantTags = ConstantTags,
@@ -76,11 +76,11 @@ namespace DatadogStatsD.Benchmark
             }
 
             [Benchmark]
-            public void StatsDClient()
+            public void DogStatsDService()
             {
                 for (int i = 0; i < Operations; i += 1)
                 {
-                    _statsDClient.Counter(MetricName, i, SamplingRate, Tags);
+                    _dogStatsDService.Counter(MetricName, i, SamplingRate, Tags);
                 }
             }
         }
@@ -92,7 +92,7 @@ namespace DatadogStatsD.Benchmark
 
             private Metrics.Histogram _datadogStatsD;
             private DatadogSharp.DogStatsd.DatadogStats _datadogSharp;
-            private DogStatsdService _statsDClient;
+            private DogStatsdService _dogStatsDService;
 
             [GlobalSetup]
             public void GlobalSetup()
@@ -108,8 +108,8 @@ namespace DatadogStatsD.Benchmark
 
                 _datadogSharp = new DatadogSharp.DogStatsd.DatadogStats(Endpoint.Address.ToString(), Endpoint.Port,
                     Namespace, ConstantTags);
-                _statsDClient = new DogStatsdService();
-                _statsDClient.Configure(new StatsdConfig
+                _dogStatsDService = new DogStatsdService();
+                _dogStatsDService.Configure(new StatsdConfig
                 {
                     Prefix = Namespace,
                     ConstantTags = ConstantTags,
@@ -137,11 +137,11 @@ namespace DatadogStatsD.Benchmark
             }
 
             [Benchmark]
-            public void StatsDClient()
+            public void DogStatsDService()
             {
                 for (int i = 0; i < Operations; i += 1)
                 {
-                    _statsDClient.Histogram(MetricName, i, SamplingRate, Tags);
+                    _dogStatsDService.Histogram(MetricName, i, SamplingRate, Tags);
                 }
             }
         }
