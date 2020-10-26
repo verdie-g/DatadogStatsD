@@ -20,7 +20,7 @@ namespace DatadogStatsD.Metrics
         /// </summary>
         public void Record(double value)
         {
-            Send(value);
+            Submit(value);
         }
     }
 }

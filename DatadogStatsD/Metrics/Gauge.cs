@@ -50,7 +50,7 @@ namespace DatadogStatsD.Metrics
             double value = Interlocked.Exchange(ref _value, double.NaN);
             if (!double.IsNaN(value)) // If a value was recorded (using Record) since the last tick
             {
-                Send(value);
+                Submit(value);
                 return;
             }
 
@@ -70,7 +70,7 @@ namespace DatadogStatsD.Metrics
                 return;
             }
 
-            Send(value);
+            Submit(value);
         }
     }
 }

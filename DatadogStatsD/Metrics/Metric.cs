@@ -80,7 +80,7 @@ namespace DatadogStatsD.Metrics
             return sb.ToString();
         }
 
-        private protected void Send(double value)
+        private protected void Submit(double value)
         {
             _telemetry.MetricSent();
 

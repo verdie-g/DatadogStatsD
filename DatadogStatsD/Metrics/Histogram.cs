@@ -21,7 +21,7 @@ namespace DatadogStatsD.Metrics
         /// <param name="value">The value.</param>
         public void Sample(double value)
         {
-            Send(value);
+            Submit(value);
         }
     }
 }

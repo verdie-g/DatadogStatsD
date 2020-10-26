@@ -51,7 +51,7 @@ namespace DatadogStatsD.Metrics
             var values = Interlocked.Exchange(ref _values, new ConcurrentDictionary<long, bool>());
             foreach (long value in values.Keys)
             {
-                Send(value);
+                Submit(value);
             }
         }
     }

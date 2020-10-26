@@ -57,7 +57,7 @@ namespace DatadogStatsD.Metrics
             long delta = Interlocked.Exchange(ref _value, 0);
             if (delta != 0)
             {
-                Send(delta);
+                Submit(delta);
             }
         }
     }
