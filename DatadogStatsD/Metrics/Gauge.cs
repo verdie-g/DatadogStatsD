@@ -37,7 +37,18 @@ namespace DatadogStatsD.Metrics
 
         private void OnTick(object? _, ElapsedEventArgs? __)
         {
-            Send(_evaluator());
+            double value;
+            try
+            {
+                value = _evaluator();
+            }
+            catch
+            {
+                // Don't send anything if the evaluator threw.
+                return;
+            }
+
+            Send(value);
         }
     }
 }

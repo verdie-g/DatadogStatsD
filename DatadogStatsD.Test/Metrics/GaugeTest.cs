@@ -33,6 +33,24 @@ namespace DatadogStatsD.Test.Metrics
             telemetry.Verify(t => t.MetricSent(), Times.Exactly(2));
         }
 
+        [Test]
+        public void NothingShouldBeSentIfEvaluatorThrows()
+        {
+            var transport = new Mock<ITransport>();
+            var telemetry = new Mock<ITelemetry>();
+            var timer = new ManualTimer();
+
+            double Evaluator() => throw new Exception();
+            var c = new Gauge(transport.Object, telemetry.Object, timer, MetricName, Evaluator, Tags);
+
+            timer.TriggerElapsed();
+            transport.Verify(t => t.Send(It.IsAny<ArraySegment<byte>>()), Times.Exactly(0));
+            telemetry.Verify(t => t.MetricSent(), Times.Exactly(0));
+
+            timer.TriggerElapsed();
+            transport.Verify(t => t.Send(It.IsAny<ArraySegment<byte>>()), Times.Exactly(0));
+            telemetry.Verify(t => t.MetricSent(), Times.Exactly(0));
+        }
 
         [Test]
         public void EvaluatorShouldBeCalledOnDispose()

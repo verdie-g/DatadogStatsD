@@ -116,7 +116,10 @@ namespace DatadogStatsD
         /// Creates a new <see cref="Gauge"/> bound to the current <see cref="DogStatsD"/> instance.
         /// </summary>
         /// <param name="metricName">Name of the metric.</param>
-        /// <param name="evaluator">A function that will be polled to get the value associated with the metric.</param>
+        /// <param name="evaluator">
+        /// A function that will be periodically evaluated to get the value associated with the metric.
+        /// The function should be fast and should not throw (else nothing is sent).
+        /// </param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
         public Gauge CreateGauge(string metricName, Func<double> evaluator, IList<string>? tags = null)
         {
