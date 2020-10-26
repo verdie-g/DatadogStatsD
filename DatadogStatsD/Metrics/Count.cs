@@ -48,8 +48,8 @@ namespace DatadogStatsD.Metrics
         /// </summary>
         public override void Dispose()
         {
-            OnTick(null, null); // flush
             _tickTimer.Elapsed -= OnTick;
+            OnTick(null, null); // flush
         }
 
         private void OnTick(object? _, ElapsedEventArgs? __)
