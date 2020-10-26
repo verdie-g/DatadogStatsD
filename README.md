@@ -7,11 +7,11 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
   [Set](https://statsd.readthedocs.io/en/v3.2.1/types.html#sets)
 - [Events](https://docs.datadoghq.com/events)
 - [Service Checks](https://docs.datadoghq.com/developers/service_checks)
-- [**UDP**](https://docs.datadoghq.com/developers/dogstatsd/?tab=hostagent#how-it-works) or
-  [**UDS**](https://docs.datadoghq.com/developers/dogstatsd/unix_socket) transport
-- **Performance (up to 30x faster than the official library)** - Metrics are aggregated and the submissions are batched
-- **Back pressure** - Transport drops new metrics when it's falling behind
-- [**Telemetry**](https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?tab=go#client-side-telemetry) -
+- [UDP](https://docs.datadoghq.com/developers/dogstatsd/?tab=hostagent#how-it-works) or
+  [UDS](https://docs.datadoghq.com/developers/dogstatsd/unix_socket) transport
+- Performance (**up to 30x faster than the official library**) - Metrics are aggregated and the submissions are batched
+- Back pressure - Transport drops new metrics when it's falling behind
+- [Telemetry](https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?tab=go#client-side-telemetry) -
   Metrics to monitor communication between the agent and this client
 
 ## Installation
@@ -45,7 +45,7 @@ requests.Decrement(); // requests--
 
 // No client-side aggregation is possible for histograms. In performance sensitive
 // scenario, a sample rate can be used to only send metrics a percentage of the time
-// and a correction is applied server-side. Not that the library is very fast, in the
+// and a correction is applied server-side. Note that the library is very fast. In the
 // benchmarks, Histogram.Sample takes 250 ns to execute.
 var latency = dogStatsD.CreateHistogram("latency", sampleRate: 0.5);
 latency.Sample(5.423);
@@ -55,9 +55,11 @@ latency.Sample(1.27);
 // until you dispose the object. you will get a graph of the number of threads in
 // your process.
 using var threads = dogStatsD.CreateGauge("threads", () => Process.GetCurrentProcess().Threads.Count);
+// You can also manually update the gauge.
+threads.Update(25);
 
-dogStasD.RaiseEvent(AlertType.Info, title: "Bad thing happened", message: "This happened");
-dogStasD.SendServiceCheck("is_connected", CheckStatus.Ok);
+dogStatsD.RaiseEvent(AlertType.Info, title: "Bad thing happened", message: "This happened");
+dogStatsD.SendServiceCheck("is_connected", CheckStatus.Ok);
 ```
 
 ## Benchmark
