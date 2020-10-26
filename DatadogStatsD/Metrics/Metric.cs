@@ -43,7 +43,7 @@ namespace DatadogStatsD.Metrics
         }
 
         /// <summary>
-        /// Do nothing. Overriden by metric like <see cref="Count"/> or <see cref="Gauge"/> that use a timer.
+        /// Do nothing. Overriden by <see cref="Count"/>, <see cref="Gauge"/> and <see cref="Set"/> that use a timer.
         /// </summary>
         public virtual void Dispose()
         {

@@ -47,7 +47,7 @@ Benchmark comparing performance of this library (DatadogStatsD), when sending 10
 (DatadogSharp) and [DataDog/dogstatsd-csharp-client](https://github.com/DataDog/dogstatsd-csharp-client) (StatsDClient).
 Sources can be found in [DatadogStatsD.Benchmark](https://github.com/verdie-g/DatadogStatsD/blob/master/DatadogStatsD.Benchmark/Program.cs).
 
-### Count & Gauge
+### Count, Gauge, Set
 
 |        Method |         Mean |      Error |     StdDev |     Gen 0 |  Gen 1 | Gen 2 | Allocated |
 |-------------- |-------------:|-----------:|-----------:|----------:|-------:|------:|----------:|
@@ -56,9 +56,9 @@ Sources can be found in [DatadogStatsD.Benchmark](https://github.com/verdie-g/Da
 |  StatsDClient |  2,577.34 us |  43.403 us |  36.244 us |  574.2188 | 3.9063 |     - |  902065 B |
 
 This library aggregates for 10 seconds ([DogStatsD flush interval](https://docs.datadoghq.com/developers/dogstatsd/data_aggregation/#how-is-aggregation-performed-with-the-dogstatsd-server))
-counts and gauges, so for 10000 increments, one packet is sent, hence the ~0 bytes allocated.
+counts, gauges and sets. So for 10000 increments, one packet is sent, hence the ~0 bytes allocated.
 
-### Histogram, Set, Distribution
+### Histogram, Distribution
 
 |        Method |      Mean |     Error |    StdDev |     Gen 0 |  Gen 1 | Gen 2 | Allocated |
 |-------------- |----------:|----------:|----------:|----------:|-------:|------:|----------:|

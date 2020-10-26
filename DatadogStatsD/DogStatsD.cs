@@ -155,6 +155,7 @@ namespace DatadogStatsD
             return new Set(
                 _transport,
                 _telemetry,
+                TickTimer,
                 PrependNamespace(metricName),
                 PrependConstantTags(tags));
         }
