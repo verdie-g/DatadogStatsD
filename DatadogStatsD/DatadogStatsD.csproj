@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
-    <Version>0.2.5</Version>
+    <Version>0.3.0</Version>
     <Description>High Performance DogStatsD Client</Description>
     <Authors>Grégoire Verdier</Authors>
     <PackageTags>Datadog;DogStatsD</PackageTags>
