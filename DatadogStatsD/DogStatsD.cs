@@ -117,11 +117,12 @@ namespace DatadogStatsD
         /// </summary>
         /// <param name="metricName">Name of the metric.</param>
         /// <param name="evaluator">
-        /// A function that will be periodically evaluated to get the value associated with the metric.
-        /// The function should be fast and should not throw (else nothing is sent).
+        /// An optional function that will be periodically evaluated to get the value associated with the metric.
+        /// The function should be fast and should not throw (else nothing is sent). If the value was recently updated
+        /// with <see cref="Gauge.Update"/>, it will be used over what <paramref name="evaluator"/> returns.
         /// </param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Gauge CreateGauge(string metricName, Func<double> evaluator, IList<string>? tags = null)
+        public Gauge CreateGauge(string metricName, Func<double>? evaluator = null, IList<string>? tags = null)
         {
             return new Gauge(
                 _transport,
