@@ -356,7 +356,7 @@ namespace DatadogStatsD.Protocol
 
         private static void WriteValue(double value, ref DogStatsDStream stream)
         {
-            bool isValueWhole = Math.Round(value) == value;
+            bool isValueWhole = Math.IEEERemainder(value, 1.0) == 0;
 #if NETSTANDARD2_0
             string valueStr = isValueWhole
                 ? ((long) value).ToString(CultureInfo.InvariantCulture)
