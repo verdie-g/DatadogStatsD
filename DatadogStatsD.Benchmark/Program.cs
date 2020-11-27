@@ -24,8 +24,8 @@ namespace DatadogStatsD.Benchmark
         private static readonly string Namespace = "ns";
         private static readonly string MetricName = "example_metric.increment";
         private static readonly double SamplingRate = 1.0;
-        private static readonly string[] ConstantTags = { "host:myhost" };
-        private static readonly string[] Tags = { "environment:dev" };
+        private static readonly string[] ConstantTags = { "env:prod", "service:my_service", "instance:my_instance" };
+        private static readonly string[] Tags = { "name:toto" };
 
         [MemoryDiagnoser]
         public class Count
@@ -60,7 +60,7 @@ namespace DatadogStatsD.Benchmark
                 });
             }
 
-            [Benchmark]
+            [Benchmark(Description = "verdie-g/DatadogStatsD", OperationsPerInvoke = Operations)]
             public void DatadogStatsD()
             {
                 for (int i = 0; i < Operations; i += 1)
@@ -69,21 +69,21 @@ namespace DatadogStatsD.Benchmark
                 }
             }
 
-            [Benchmark]
-            public void DatadogSharp()
-            {
-                for (int i = 0; i < Operations; i += 1)
-                {
-                    _datadogSharp.Increment(MetricName, i, SamplingRate, Tags);
-                }
-            }
-
-            [Benchmark]
+            [Benchmark(Description = "Datadog/dogstatsd-csharp-client", OperationsPerInvoke = Operations)]
             public void DogStatsDService()
             {
                 for (int i = 0; i < Operations; i += 1)
                 {
                     _dogStatsDService.Counter(MetricName, i, SamplingRate, Tags);
+                }
+            }
+
+            [Benchmark(Description = "neuecc/DatadogSharp", OperationsPerInvoke = Operations)]
+            public void DatadogSharp()
+            {
+                for (int i = 0; i < Operations; i += 1)
+                {
+                    _datadogSharp.Increment(MetricName, i, SamplingRate, Tags);
                 }
             }
         }
@@ -121,7 +121,7 @@ namespace DatadogStatsD.Benchmark
                 });
             }
 
-            [Benchmark]
+            [Benchmark(Description = "verdie-g/DatadogStatsD", OperationsPerInvoke = Operations)]
             public void DatadogStatsD()
             {
                 for (int i = 0; i < Operations; i += 1)
@@ -130,21 +130,21 @@ namespace DatadogStatsD.Benchmark
                 }
             }
 
-            [Benchmark]
-            public void DatadogSharp()
-            {
-                for (int i = 0; i < Operations; i += 1)
-                {
-                    _datadogSharp.Histogram(MetricName, i, SamplingRate, Tags);
-                }
-            }
-
-            [Benchmark]
+            [Benchmark(Description = "Datadog/dogstatsd-csharp-client", OperationsPerInvoke = Operations)]
             public void DogStatsDService()
             {
                 for (int i = 0; i < Operations; i += 1)
                 {
                     _dogStatsDService.Histogram(MetricName, i, SamplingRate, Tags);
+                }
+            }
+
+            [Benchmark(Description = "neuecc/DatadogSharp", OperationsPerInvoke = Operations)]
+            public void DatadogSharp()
+            {
+                for (int i = 0; i < Operations; i += 1)
+                {
+                    _datadogSharp.Histogram(MetricName, i, SamplingRate, Tags);
                 }
             }
         }

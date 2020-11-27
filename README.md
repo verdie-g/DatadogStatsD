@@ -9,7 +9,7 @@ Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) clien
 - [Service Checks](https://docs.datadoghq.com/developers/service_checks)
 - [UDP](https://docs.datadoghq.com/developers/dogstatsd/?tab=hostagent#how-it-works) or
   [UDS](https://docs.datadoghq.com/developers/dogstatsd/unix_socket) transport
-- Performance (**up to 30x faster than the official library**) - Metrics are aggregated and the submissions are batched
+- Performance (**up to 45x faster than the official library**) - Metrics are aggregated and the submissions are batched
 - Back pressure - Transport drops new metrics when it's falling behind
 - [Telemetry](https://docs.datadoghq.com/developers/dogstatsd/high_throughput/?tab=go#client-side-telemetry) -
   Metrics to monitor communication between the agent and this client
@@ -64,35 +64,35 @@ dogStatsD.SendServiceCheck("is_connected", CheckStatus.Ok);
 
 ## Benchmark
 
-Benchmark comparing performance of this library (DatadogStatsD), when sending
-10000 metrics, with [DataDog/dogstatsd-csharp-client](https://github.com/DataDog/dogstatsd-csharp-client) (DogStatsDService)
-and [neuecc/DatadogSharp](https://github.com/neuecc/DatadogSharp) (DatadogSharp).
+Benchmark comparing performance of this library
+with [DataDog/dogstatsd-csharp-client](https://github.com/DataDog/dogstatsd-csharp-client)
+and [neuecc/DatadogSharp](https://github.com/neuecc/DatadogSharp).
 Sources can be found in [DatadogStatsD.Benchmark](https://github.com/verdie-g/DatadogStatsD/blob/master/DatadogStatsD.Benchmark/Program.cs).
 
 ### Count, Gauge, Set
 
-|           Method |         Mean |      Error |     StdDev |     Gen 0 |  Gen 1 | Gen 2 | Allocated |
-|----------------- |-------------:|-----------:|-----------:|----------:|-------:|------:|----------:|
-|    DatadogStatsD |     81.02 us |   0.078 us |   0.073 us |         - |      - |     - |         - |
-| DogStatsDService |  2,515.55 us |  44.406 us |  39.365 us |  574.2188 | 3.9063 |     - |  901739 B |
-|     DatadogSharp | 87,210.79 us | 473.027 us | 419.326 us | 3000.0000 |      - |     - | 4879285 B |
+|                          Method |         Mean |      Error |     StdDev |  Gen 0 |  Gen 1 | Gen 2 | Allocated |
+|-------------------------------- |-------------:|-----------:|-----------:|-------:|-------:|------:|----------:|
+|          verdie-g/DatadogStatsD |     5.401 ns |  0.0156 ns |  0.0138 ns |      - |      - |     - |         - |
+| Datadog/dogstatsd-csharp-client |   239.765 ns |  1.0619 ns |  0.9933 ns | 0.0289 | 0.0004 |     - |      91 B |
+|             neuecc/DatadogSharp | 5,521.473 ns | 40.4321 ns | 33.7627 ns | 0.1889 |      - |     - |     599 B |
 
 This library aggregates for 10 seconds ([DogStatsD flush interval](https://docs.datadoghq.com/developers/dogstatsd/data_aggregation/#how-is-aggregation-performed-with-the-dogstatsd-server))
-counts, gauges and sets. So for 10000 increments, one packet is sent, hence the ~0 bytes allocated.
+counts, gauges and sets. So for 1000 increments, one packet is sent, hence the ~0 bytes allocated.
 
 ### Histogram, Distribution
 
-|           Method |      Mean |     Error |    StdDev |     Gen 0 |  Gen 1 | Gen 2 | Allocated |
-|----------------- |----------:|----------:|----------:|----------:|-------:|------:|----------:|
-|    DatadogStatsD |  2.543 ms | 0.0504 ms | 0.0581 ms |         - |      - |     - |     636 B |
-| DogStatsDService |  2.502 ms | 0.0351 ms | 0.0328 ms |  574.2188 | 3.9063 |     - |  901715 B |
-|     DatadogSharp | 87.172 ms | 0.3307 ms | 0.3093 ms | 3000.0000 |      - |     - | 4879343 B |
+|                          Method |       Mean |     Error |   StdDev |  Gen 0 |  Gen 1 | Gen 2 | Allocated |
+|-------------------------------- |-----------:|----------:|---------:|-------:|-------:|------:|----------:|
+|          verdie-g/DatadogStatsD |   254.0 ns |   3.42 ns |  3.19 ns |      - |      - |     - |         - |
+| Datadog/dogstatsd-csharp-client |   232.7 ns |   2.02 ns |  1.89 ns | 0.0289 | 0.0004 |     - |      91 B |
+|             neuecc/DatadogSharp | 5,523.6 ns | 110.24 ns | 92.05 ns | 0.1900 |      - |     - |     599 B |
 
 For those metrics, the library lets DogStatsD agent do the aggregation, so with
 a sample rate of 1.0, each call to Histogram.Update will be sent to the agent.
 
 Even though execution times might seem similar between this library (DatadogStatsD)
-and the official one (DogStatsDService), during the 250ns (2.5ms / 10000 ops), the
-former serializes the metric and enqueue it, ready to be sent to the agent, when the
-latter only enqueues the values passed to the `DogStatsDService.Histogram` method and
-the serialization is done in a dedicated thread.
+and the official one (DogStatsDService), during the 250ns, the former serializes
+the metric and enqueue it, ready to be sent to the agent, when the latter only
+enqueues the values passed to the `DogStatsDService.Histogram` method and the
+serialization is done in a dedicated thread.
