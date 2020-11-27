@@ -57,7 +57,11 @@ namespace DatadogStatsD
             _conf = conf ?? throw new ArgumentNullException(nameof(conf));
             conf.EndPoint = conf.EndPoint ?? throw new ArgumentNullException(nameof(conf.EndPoint));
             _namespaceBytes = conf.Namespace != null ? DogStatsDSerializer.SerializeMetricName(conf.Namespace) : Array.Empty<byte>();
-            _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(_conf.ConstantTags);
+
+            var distinctConstantTags = _conf.ConstantTags == null
+                ? Array.Empty<KeyValuePair<string, string>>()
+                : MergeTags(_conf.ConstantTags, Array.Empty<KeyValuePair<string, string>>());
+            _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(distinctConstantTags);
 
             int maxBufferingSize;
             string transportName;
@@ -243,7 +247,29 @@ namespace DatadogStatsD
                 return _conf.ConstantTags;
             }
 
-            return _conf.ConstantTags.Concat(tags).ToList();
+            return MergeTags(_conf.ConstantTags, tags);
+        }
+
+        /// <summary>
+        /// Merges two sets of tags. If a set has several tags with the same key, the last one is kept. If the two sets
+        /// have tags with the same key, the tags from <paramref name="tags2"/> are kept.
+        /// </summary>
+        private IList<KeyValuePair<string, string>> MergeTags(IList<KeyValuePair<string, string>> tags1,
+            IList<KeyValuePair<string, string>> tags2)
+        {
+            // SortedDictionary to keep the constant tags first.
+            var tags = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            foreach (var tag in tags1)
+            {
+                tags[tag.Key] = tag.Value;
+            }
+
+            foreach (var tag in tags2)
+            {
+                tags[tag.Key] = tag.Value;
+            }
+
+            return tags.ToArray();
         }
     }
 }
