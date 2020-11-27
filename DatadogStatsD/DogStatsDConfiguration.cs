@@ -22,7 +22,8 @@ namespace DatadogStatsD
         public string? Namespace { get; set; }
 
         /// <summary>
-        /// Tags to apply to all metrics, events, and service checks. The value of a tag can be empty.
+        /// Tags to apply to all metrics, events, and service checks. The value of a tag can be empty. These tags
+        /// override the ones passed through the environment (DD_ENV, DD_SERVICE, DD_VERSION).
         /// </summary>
         public IList<KeyValuePair<string, string>>? ConstantTags { get; set; }
 

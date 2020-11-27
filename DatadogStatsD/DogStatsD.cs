@@ -36,8 +36,9 @@ namespace DatadogStatsD
         private static readonly ITimer TickTimer = new TimerWrapper(TickInterval);
         private static readonly byte[] SourceBytes = DogStatsDSerializer.SerializeSource("csharp");
 
-        private readonly DogStatsDConfiguration _conf;
+        private readonly string _namespace;
         private readonly byte[] _namespaceBytes;
+        private readonly KeyValuePair<string, string>[] _constantTags;
         private readonly byte[] _constantTagsBytes;
         private readonly ITransport _transport;
         private readonly ITelemetry _telemetry;
@@ -54,14 +55,12 @@ namespace DatadogStatsD
         /// </summary>
         public DogStatsD(DogStatsDConfiguration conf)
         {
-            _conf = conf ?? throw new ArgumentNullException(nameof(conf));
+            conf = conf ?? throw new ArgumentNullException(nameof(conf));
             conf.EndPoint = conf.EndPoint ?? throw new ArgumentNullException(nameof(conf.EndPoint));
+            _namespace = conf.Namespace ?? string.Empty;
             _namespaceBytes = conf.Namespace != null ? DogStatsDSerializer.SerializeMetricName(conf.Namespace) : Array.Empty<byte>();
-
-            var distinctConstantTags = _conf.ConstantTags == null
-                ? Array.Empty<KeyValuePair<string, string>>()
-                : MergeTags(_conf.ConstantTags, Array.Empty<KeyValuePair<string, string>>());
-            _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(distinctConstantTags);
+            _constantTags = MergeTags(GetConstantTagsFromEnvironment(), conf.ConstantTags).ToArray();
+            _constantTagsBytes = DogStatsDSerializer.ValidateAndSerializeTags(_constantTags);
 
             int maxBufferingSize;
             string transportName;
@@ -76,10 +75,10 @@ namespace DatadogStatsD
                 transportName = UdpName;
             }
 
-            var socket = new SocketWrapper(_conf.EndPoint);
+            var socket = new SocketWrapper(conf.EndPoint);
             _transport = new NonBlockingBufferedTransport(socket, maxBufferingSize, MaxBufferingTime, MaxQueueSize);
-            _telemetry = _conf.Telemetry
-                ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer, _conf.ConstantTags ?? Array.Empty<KeyValuePair<string, string>>())
+            _telemetry = conf.Telemetry
+                ? (ITelemetry)new Telemetry(transportName, _transport, TickTimer, _constantTags)
                 : (ITelemetry)new NoopTelemetry();
             _transport.OnPacketSent += size => _telemetry.PacketSent(size);
             _transport.OnPacketDropped += (size, queue) => _telemetry.PacketDropped(size, queue);
@@ -230,46 +229,70 @@ namespace DatadogStatsD
             // Use this method, which is used in all methods to create metrics, to check if the user didn't respect the contract
             metricName = metricName ?? throw new ArgumentNullException(nameof(metricName));
 
-            return string.IsNullOrEmpty(_conf.Namespace)
+            return _namespace.Length == 0
                 ? metricName
-                : _conf.Namespace + "." + metricName;
+                : _namespace + "." + metricName;
         }
 
         private IList<KeyValuePair<string, string>>? PrependConstantTags(IList<KeyValuePair<string, string>>? tags)
         {
-            if (_conf.ConstantTags == null || _conf.ConstantTags.Count == 0)
+            if (_constantTags.Length == 0)
             {
                 return tags;
             }
 
             if (tags == null || tags.Count == 0)
             {
-                return _conf.ConstantTags;
+                return _constantTags;
             }
 
-            return MergeTags(_conf.ConstantTags, tags);
+            return MergeTags(_constantTags, tags);
         }
 
         /// <summary>
         /// Merges two sets of tags. If a set has several tags with the same key, the last one is kept. If the two sets
         /// have tags with the same key, the tags from <paramref name="tags2"/> are kept.
         /// </summary>
-        private IList<KeyValuePair<string, string>> MergeTags(IList<KeyValuePair<string, string>> tags1,
-            IList<KeyValuePair<string, string>> tags2)
+        private static IList<KeyValuePair<string, string>> MergeTags(IEnumerable<KeyValuePair<string, string>>? tags1,
+            IEnumerable<KeyValuePair<string, string>>? tags2)
         {
-            // SortedDictionary to keep the constant tags first.
-            var tags = new SortedDictionary<string, string>(StringComparer.Ordinal);
-            foreach (var tag in tags1)
+            var tags = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (tags1 != null)
             {
-                tags[tag.Key] = tag.Value;
+                foreach (var tag in tags1)
+                {
+                    tags[tag.Key] = tag.Value;
+                }
             }
 
-            foreach (var tag in tags2)
+            if (tags2 != null)
             {
-                tags[tag.Key] = tag.Value;
+                foreach (var tag in tags2)
+                {
+                    tags[tag.Key] = tag.Value;
+                }
             }
 
             return tags.ToArray();
+        }
+
+        private static IEnumerable<KeyValuePair<string, string>> GetConstantTagsFromEnvironment()
+        {
+            KeyValuePair<string, string>[] supportedVariables =
+            {
+                new KeyValuePair<string, string>("DD_ENV", "env"),
+                new KeyValuePair<string, string>("DD_SERVICE", "service"),
+                new KeyValuePair<string, string>("DD_VERSION", "version"),
+            };
+
+            foreach (var variable in supportedVariables)
+            {
+                string? value = Environment.GetEnvironmentVariable(variable.Key);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    yield return new KeyValuePair<string, string>(variable.Value, value);
+                }
+            }
         }
     }
 }
