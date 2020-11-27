@@ -283,6 +283,8 @@ namespace DatadogStatsD
                 new KeyValuePair<string, string>("DD_ENV", "env"),
                 new KeyValuePair<string, string>("DD_SERVICE", "service"),
                 new KeyValuePair<string, string>("DD_VERSION", "version"),
+                // Client-side entity ID injection for container tagging. See https://docs.datadoghq.com/developers/dogstatsd/?tab=kubernetes#origin-detection-over-udp.
+                new KeyValuePair<string, string>("DD_ENTITY_ID", "dd.internal.entity_id"),
             };
 
             foreach (var variable in supportedVariables)
