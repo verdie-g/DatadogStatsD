@@ -107,7 +107,7 @@ namespace DatadogStatsD.Benchmark
                     EndPoint = Endpoint,
                     Namespace = Namespace,
                     ConstantTags = ParseTags(ConstantTags).ToArray(),
-                }).CreateHistogram(MetricName, 1.0, ParseTags(Tags).ToArray());
+                }).CreateHistogram(MetricName, ParseTags(Tags).ToArray());
 
                 _datadogSharp = new DatadogSharp.DogStatsd.DatadogStats(Endpoint.Address.ToString(), Endpoint.Port,
                     Namespace, ConstantTags);

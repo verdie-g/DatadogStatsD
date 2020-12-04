@@ -42,7 +42,7 @@ namespace DatadogStatsD.Test
         public void InvalidMetricNameShouldThrow(MetricType type, string name)
         {
             var dog = new DogStatsD();
-            Assert.Throws<ArgumentException>(() => CreateMetric(dog, type, name, 1.0, Tags));
+            Assert.Throws<ArgumentException>(() => CreateMetric(dog, type, name, Tags));
         }
 
         [TestCase(MetricType.Count)]
@@ -53,7 +53,7 @@ namespace DatadogStatsD.Test
         public void NullMetricNameShouldThrow(MetricType type)
         {
             var dog = new DogStatsD();
-            Assert.Throws<ArgumentNullException>(() => CreateMetric(dog, type, null!, 1.0, Tags));
+            Assert.Throws<ArgumentNullException>(() => CreateMetric(dog, type, null!, Tags));
         }
 
         [TestCase(MetricType.Count, "a")]
@@ -69,27 +69,7 @@ namespace DatadogStatsD.Test
         public void ValueMetricNameShouldNotThrow(MetricType type, string name)
         {
             var dog = new DogStatsD();
-            Assert.DoesNotThrow(() => CreateMetric(dog, type, name, 1.0, Tags));
-        }
-
-        [TestCase(MetricType.Histogram, 1.01)]
-        [TestCase(MetricType.Histogram, -1.01)]
-        [TestCase(MetricType.Distribution, 1.01)]
-        [TestCase(MetricType.Distribution, -1.01)]
-        public void InvalidSampleRateShouldThrow(MetricType type, double sampleRate)
-        {
-            var dog = new DogStatsD();
-            Assert.Throws<ArgumentOutOfRangeException>(() => CreateMetric(dog, type, MetricName, sampleRate, Tags));
-        }
-
-        [TestCase(MetricType.Histogram, 1.00)]
-        [TestCase(MetricType.Histogram, 0.99)]
-        [TestCase(MetricType.Histogram, 0.5)]
-        [TestCase(MetricType.Histogram, 0)]
-        public void ValidSampleRateShouldNotThrow(MetricType type, double sampleRate)
-        {
-            var dog = new DogStatsD();
-            Assert.DoesNotThrow(() => CreateMetric(dog, type, MetricName, sampleRate, Tags));
+            Assert.DoesNotThrow(() => CreateMetric(dog, type, name, Tags));
         }
 
         [TestCase(MetricType.Count, "1a")]
@@ -101,7 +81,7 @@ namespace DatadogStatsD.Test
         public void InvalidTagsShouldThrow(MetricType type, string tag)
         {
             var dog = new DogStatsD();
-            Assert.Throws<ArgumentException>(() => CreateMetric(dog, type, MetricName, 1.0, TestHelper.ParseTags(tag)));
+            Assert.Throws<ArgumentException>(() => CreateMetric(dog, type, MetricName, TestHelper.ParseTags(tag)));
         }
 
         [TestCase(MetricType.Count, "a1")]
@@ -115,7 +95,7 @@ namespace DatadogStatsD.Test
         public void ValidTagsShouldNotThrow(MetricType type, string tag)
         {
             var dog = new DogStatsD();
-            Assert.DoesNotThrow(() => CreateMetric(dog, type, MetricName, 1.0, TestHelper.ParseTags(tag)));
+            Assert.DoesNotThrow(() => CreateMetric(dog, type, MetricName, TestHelper.ParseTags(tag)));
         }
 
         [Test]
@@ -146,14 +126,14 @@ namespace DatadogStatsD.Test
             Assert.Throws<ArgumentNullException>(() => dog.SendServiceCheck("", CheckStatus.Ok, null!));
         }
 
-        private Metric CreateMetric(DogStatsD dog, MetricType type, string name, double sampleRate, IList<KeyValuePair<string, string>>? tags)
+        private Metric CreateMetric(DogStatsD dog, MetricType type, string name, IList<KeyValuePair<string, string>>? tags)
         {
             return type switch
             {
                 MetricType.Count => dog.CreateCount(name, tags),
-                MetricType.Distribution => dog.CreateDistribution(name, sampleRate, tags),
+                MetricType.Distribution => dog.CreateDistribution(name, tags),
                 MetricType.Gauge => dog.CreateGauge(name, () => 0, tags),
-                MetricType.Histogram => dog.CreateHistogram(name, sampleRate, tags),
+                MetricType.Histogram => dog.CreateHistogram(name, tags),
                 MetricType.Set => dog.CreateSet(name, tags),
                 _ => throw new ArgumentException(nameof(type)),
             };

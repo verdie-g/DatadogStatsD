@@ -22,7 +22,7 @@ namespace DatadogStatsD.Test.Metrics
         {
             var transport = new Mock<ITransport>();
             var telemetry = new Mock<ITelemetry>();
-            var h = new Histogram(transport.Object, telemetry.Object, MetricName, 1.0, Tags);
+            var h = new Histogram(transport.Object, telemetry.Object, MetricName, Tags);
 
             h.Sample(123.456);
             transport.Verify(t => t.Send(It.IsAny<ArraySegment<byte>>()), Times.Exactly(1));

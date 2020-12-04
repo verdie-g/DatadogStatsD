@@ -22,7 +22,7 @@ namespace DatadogStatsD.Metrics
         private ConcurrentDictionary<long, bool> _values;
 
         internal Set(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName, IList<KeyValuePair<string, string>>? tags)
-            : base(transport, telemetry, metricName, MetricType.Set, 1.0, tags)
+            : base(transport, telemetry, metricName, MetricType.Set, tags)
         {
             _tickTimer = tickTimer;
             _values = new ConcurrentDictionary<long, bool>();

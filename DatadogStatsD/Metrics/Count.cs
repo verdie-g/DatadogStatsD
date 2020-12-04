@@ -18,7 +18,7 @@ namespace DatadogStatsD.Metrics
         private long _value;
 
         internal Count(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName, IList<KeyValuePair<string, string>>? tags)
-            : base(transport, telemetry, metricName, MetricType.Count, 1.0, tags)
+            : base(transport, telemetry, metricName, MetricType.Count, tags)
         {
             _tickTimer = tickTimer;
             _tickTimer.Elapsed += OnTick;

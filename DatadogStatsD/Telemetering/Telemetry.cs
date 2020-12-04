@@ -18,7 +18,7 @@ namespace DatadogStatsD.Telemetering
         private const string ClientTransportKey = "client_transport";
 
         /// <summary>
-        /// Number of metrics sent (before sampling).
+        /// Number of metrics sent.
         /// </summary>
         private readonly Count _metricsCount;
 

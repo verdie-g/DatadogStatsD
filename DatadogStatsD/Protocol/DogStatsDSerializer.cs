@@ -29,7 +29,6 @@ namespace DatadogStatsD.Protocol
 
         private const string EventPrefix = "_e";
         private const string ServiceCheckPrefix = "_sc";
-        private const string SampleRatePrefix = "|@";
         private const string AlertTypePrefix = "|t:";
         private const string PriorityPrefix = "|p:";
         private const string AggregationKeyPrefix = "|k:";
@@ -38,7 +37,6 @@ namespace DatadogStatsD.Protocol
         private const string TagsPrefix  = "|#";
         private static readonly byte[] EventPrefixBytes = Encoding.ASCII.GetBytes(EventPrefix);
         private static readonly byte[] ServiceCheckPrefixBytes = Encoding.ASCII.GetBytes(ServiceCheckPrefix);
-        private static readonly byte[] SampleRatePrefixBytes = Encoding.ASCII.GetBytes(SampleRatePrefix);
         private static readonly byte[] AggregationKeyPrefixBytes = Encoding.ASCII.GetBytes(AggregationKeyPrefix);
         private static readonly byte[] SourcePrefixBytes = Encoding.ASCII.GetBytes(SourcePrefix);
         private static readonly byte[] ServiceCheckMessagePrefixBytes = Encoding.ASCII.GetBytes(ServiceCheckMessagePrefix);
@@ -81,7 +79,7 @@ namespace DatadogStatsD.Protocol
             int length = metricPrefixBytes.Length + SerializedValueMaxLength + metricSuffixBytes.Length;
             var stream = new DogStatsDStream(length);
 
-            // <METRIC_NAME>:<VALUE>|<TYPE>|@<SAMPLE_RATE>|#<TAGS>
+            // <METRIC_NAME>:<VALUE>|<TYPE>|#<TAGS>
             stream.Write(metricPrefixBytes);
             WriteValue(value, ref stream);
             stream.Write(metricSuffixBytes);
@@ -95,19 +93,13 @@ namespace DatadogStatsD.Protocol
             return SerializeMetricName(metricName).Append((byte)':').ToArray();
         }
 
-        public static byte[] SerializeMetricSuffix(MetricType metricType, double sampleRate, IList<KeyValuePair<string, string>>? tags)
+        public static byte[] SerializeMetricSuffix(MetricType metricType, IList<KeyValuePair<string, string>>? tags)
         {
-            // |<TYPE>|@<SAMPLE_RATE>|#<TAGS>
+            // |<TYPE>|#<TAGS>
             IEnumerable<byte> bytes = Enumerable.Empty<byte>();
 
             bytes = bytes.Append((byte)'|');
             bytes = bytes.Concat(SerializeMetricType(metricType));
-
-            if (sampleRate != 1.0)
-            {
-                bytes = bytes.Concat(SampleRatePrefixBytes);
-                bytes = bytes.Concat(ValidateAndSerializeSampleRate(sampleRate));
-            }
 
             if (tags != null && tags.Count != 0)
             {
@@ -244,16 +236,6 @@ namespace DatadogStatsD.Protocol
             }
 
             return Encoding.ASCII.GetBytes(metricName);
-        }
-
-        public static byte[] ValidateAndSerializeSampleRate(double sampleRate)
-        {
-            if (sampleRate < 0.0 || sampleRate > 1.0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(sampleRate), "Sample rate must be included between 0 and 1");
-            }
-
-            return Encoding.ASCII.GetBytes(sampleRate.ToString(CultureInfo.InvariantCulture));
         }
 
         public static byte[] SerializeSource(string? source)

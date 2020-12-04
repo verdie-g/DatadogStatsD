@@ -16,7 +16,6 @@ namespace DatadogStatsD.Metrics
         private readonly ITelemetry _telemetry;
 
         private readonly string _metricName;
-        private readonly double _sampleRate;
         private readonly IList<KeyValuePair<string, string>>? _tags;
 
         /// <summary>
@@ -25,21 +24,20 @@ namespace DatadogStatsD.Metrics
         private readonly byte[] _metricPrefixBytes;
 
         /// <summary>
-        /// Everything after the value (type + sample rate + tags).
+        /// Everything after the value (type + tags).
         /// </summary>
         private readonly byte[] _metricSuffixBytes;
 
         internal Metric(ITransport transport, ITelemetry telemetry, string metricName, MetricType metricType,
-            double sampleRate, IList<KeyValuePair<string, string>>? tags)
+            IList<KeyValuePair<string, string>>? tags)
         {
             _transport = transport;
             _telemetry = telemetry;
             _metricName = metricName;
-            _sampleRate = sampleRate;
             _tags = tags;
 
             _metricPrefixBytes = DogStatsDSerializer.SerializeMetricPrefix(metricName);
-            _metricSuffixBytes = DogStatsDSerializer.SerializeMetricSuffix(metricType, sampleRate, tags);
+            _metricSuffixBytes = DogStatsDSerializer.SerializeMetricSuffix(metricType, tags);
         }
 
         /// <summary>
@@ -85,10 +83,6 @@ namespace DatadogStatsD.Metrics
         private protected void Submit(double value)
         {
             _telemetry.MetricSent();
-
-            if (!Sampling.Sample(_sampleRate))
-                return;
-
             var metricBytes = DogStatsDSerializer.SerializeMetric(_metricPrefixBytes, value, _metricSuffixBytes);
             _transport.Send(metricBytes);
         }

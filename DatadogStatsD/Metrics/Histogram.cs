@@ -10,8 +10,8 @@ namespace DatadogStatsD.Metrics
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types/?tab=histogram#metric-types</remarks>
     public class Histogram : Metric
     {
-        internal Histogram(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<KeyValuePair<string, string>>? tags)
-            : base(transport, telemetry, metricName, MetricType.Histogram, sampleRate, tags)
+        internal Histogram(ITransport transport, ITelemetry telemetry, string metricName, IList<KeyValuePair<string, string>>? tags)
+            : base(transport, telemetry, metricName, MetricType.Histogram, tags)
         {
         }
 

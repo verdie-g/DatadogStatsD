@@ -24,7 +24,7 @@ namespace DatadogStatsD.Sample
 
             using var count = dog.CreateCount("count");
             using var gauge = dog.CreateGauge("gauge", () => i);
-            using var hist = dog.CreateHistogram("histogram", 0.5);
+            using var hist = dog.CreateHistogram("histogram");
             using var set = dog.CreateSet("set");
             using var distribution = dog.CreateDistribution("distribution");
 

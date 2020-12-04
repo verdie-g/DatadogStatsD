@@ -21,7 +21,7 @@ namespace DatadogStatsD.Metrics
 
         internal Gauge(ITransport transport, ITelemetry telemetry, ITimer tickTimer, string metricName,
             Func<double>? evaluator, IList<KeyValuePair<string, string>>? tags)
-            : base(transport, telemetry, metricName, MetricType.Gauge, 1.0, tags)
+            : base(transport, telemetry, metricName, MetricType.Gauge, tags)
         {
             _tickTimer = tickTimer;
             _evaluator = evaluator;

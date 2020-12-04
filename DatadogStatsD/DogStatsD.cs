@@ -103,15 +103,13 @@ namespace DatadogStatsD
         /// Creates a new <see cref="Histogram"/> bound to the current <see cref="DogStatsD"/> instance.
         /// </summary>
         /// <param name="metricName">Name of the metric.</param>
-        /// <param name="sampleRate">Sample rate to apply to the metric. Takes a value between 0 (everything is sampled, so nothing is sent) and 1 (no sample).</param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Histogram CreateHistogram(string metricName, double sampleRate = 1.0, IList<KeyValuePair<string, string>>? tags = null)
+        public Histogram CreateHistogram(string metricName, IList<KeyValuePair<string, string>>? tags = null)
         {
             return new Histogram(
                 _transport,
                 _telemetry,
                 PrependNamespace(metricName),
-                sampleRate,
                 PrependConstantTags(tags));
         }
 
@@ -140,15 +138,13 @@ namespace DatadogStatsD
         /// Creates a new <see cref="Distribution"/> bound to the current <see cref="DogStatsD"/> instance.
         /// </summary>
         /// <param name="metricName">Name of the metric.</param>
-        /// <param name="sampleRate">Sample rate to apply to the metric. Takes a value between 0 (everything is sampled, so nothing is sent) and 1 (no sample).</param>
         /// <param name="tags">Tags to add to the metric in addition to <see cref="DogStatsDConfiguration.ConstantTags"/>.</param>
-        public Distribution CreateDistribution(string metricName, double sampleRate = 1.0, IList<KeyValuePair<string, string>>? tags = null)
+        public Distribution CreateDistribution(string metricName, IList<KeyValuePair<string, string>>? tags = null)
         {
             return new Distribution(
                 _transport,
                 _telemetry,
                 PrependNamespace(metricName),
-                sampleRate,
                 PrependConstantTags(tags));
         }
 

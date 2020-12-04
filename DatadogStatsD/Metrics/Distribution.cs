@@ -10,8 +10,8 @@ namespace DatadogStatsD.Metrics
     /// <remarks>Documentation: https://docs.datadoghq.com/developers/metrics/types?tab=distribution#metric-types</remarks>
     public class Distribution : Metric
     {
-        internal Distribution(ITransport transport, ITelemetry telemetry, string metricName, double sampleRate, IList<KeyValuePair<string, string>>? tags)
-            : base(transport, telemetry, metricName, MetricType.Distribution, sampleRate, tags)
+        internal Distribution(ITransport transport, ITelemetry telemetry, string metricName, IList<KeyValuePair<string, string>>? tags)
+            : base(transport, telemetry, metricName, MetricType.Distribution, tags)
         {
         }
 

@@ -43,11 +43,8 @@ requests.Decrement(); // requests--
 // Because counters are aggregated client-side, nothing is sent here since the metric
 // was incremented once then decremented once which results in zero.
 
-// No client-side aggregation is possible for histograms. In performance sensitive
-// scenario, a sample rate can be used to only send metrics a percentage of the time
-// and a correction is applied server-side. Note that the library is very fast. In the
-// benchmarks, Histogram.Sample takes 250 ns to execute.
-var latency = dogStatsD.CreateHistogram("latency", sampleRate: 0.5);
+// No client-side aggregation is possible for histograms.
+var latency = dogStatsD.CreateHistogram("latency");
 latency.Sample(5.423);
 latency.Sample(1.27);
 
@@ -88,8 +85,8 @@ counts, gauges and sets. So for 1000 increments, one packet is sent, hence the ~
 | Datadog/dogstatsd-csharp-client |   232.7 ns |   2.02 ns |  1.89 ns | 0.0289 | 0.0004 |     - |      91 B |
 |             neuecc/DatadogSharp | 5,523.6 ns | 110.24 ns | 92.05 ns | 0.1900 |      - |     - |     599 B |
 
-For those metrics, the library lets DogStatsD agent do the aggregation, so with
-a sample rate of 1.0, each call to Histogram.Update will be sent to the agent.
+For those metrics, the library lets DogStatsD agent do the aggregation, so each 
+call to Histogram.Update will be sent to the agent.
 
 Even though execution times might seem similar between this library (DatadogStatsD)
 and the official one (DogStatsDService), during the 250ns, the former serializes
