@@ -8,7 +8,7 @@
     <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
       <PackageReference Include="DatadogSharp" Version="1.5.5.1" />
-      <PackageReference Include="DogStatsD-CSharp-Client" Version="5.1.0" />
+      <PackageReference Include="DogStatsD-CSharp-Client" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
