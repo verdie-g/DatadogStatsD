@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
@@ -18,8 +19,10 @@ namespace DatadogStatsD.Metrics
         /// <summary>
         /// Record a global distribution value.
         /// </summary>
+        /// <exception cref="ArgumentException"><paramref name="value"/> is NaN.</exception>
         public void Record(double value)
         {
+            ThrowHelper.ThrowIfNaN(value);
             Submit(value);
         }
     }

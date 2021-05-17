@@ -33,7 +33,12 @@ namespace DatadogStatsD.Metrics
         /// of this gauge over the one returned by the evaluator function.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void Update(double value) => Interlocked.Exchange(ref _value, value);
+        /// <exception cref="ArgumentException"><paramref name="value"/> is NaN.</exception>
+        public void Update(double value)
+        {
+            ThrowHelper.ThrowIfNaN(value);
+            Interlocked.Exchange(ref _value, value);
+        }
 
         /// <summary>
         /// Break the bond between the <see cref="Count"/> and the <see cref="DogStatsD"/>. Not calling this method

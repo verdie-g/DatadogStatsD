@@ -108,9 +108,15 @@ namespace DatadogStatsD.Test
             Assert.Throws<ArgumentException>(() => DogStatsDSerializer.SerializeMetricName(name));
         }
 
+        [TestCase(double.NaN)]
+        public void SerializeSampleRateArgumentException(double sampleRate)
+        {
+            Assert.Throws<ArgumentException>(() => DogStatsDSerializer.ValidateAndSerializeSampleRate(sampleRate));
+        }
+
         [TestCase(-0.5)]
         [TestCase(1.5)]
-        public void SerializeSampleRateArgumentException(double sampleRate)
+        public void SerializeSampleRateArgumentOutOfRangeException(double sampleRate)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => DogStatsDSerializer.ValidateAndSerializeSampleRate(sampleRate));
         }

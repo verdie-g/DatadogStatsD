@@ -18,6 +18,16 @@ namespace DatadogStatsD.Test.Metrics
         };
 
         [Test]
+        public void RecordShouldThrowIfValueIsNaN()
+        {
+            var transport = new Mock<ITransport>();
+            var telemetry = new Mock<ITelemetry>();
+            var h = new Histogram(transport.Object, telemetry.Object, MetricName, 1.0, Tags);
+
+            Assert.Throws<ArgumentException>(() => h.Sample(double.NaN));
+        }
+
+        [Test]
         public void RecordShouldSentBytesToTransport()
         {
             var transport = new Mock<ITransport>();

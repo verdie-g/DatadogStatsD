@@ -38,6 +38,18 @@ namespace DatadogStatsD.Test.Metrics
         }
 
         [Test]
+        public void UpdateShouldThrowIfValueIsNaN()
+        {
+            var transport = new Mock<ITransport>();
+            var telemetry = new Mock<ITelemetry>();
+            var timer = new ManualTimer();
+
+            var c = new Gauge(transport.Object, telemetry.Object, timer, MetricName, null, Tags);
+
+            Assert.Throws<ArgumentException>(() => c.Update(double.NaN));
+        }
+
+        [Test]
         public void UpdatedValueShouldBeUsedWhenNoEvaluator()
         {
             var transport = new Mock<ITransport>();

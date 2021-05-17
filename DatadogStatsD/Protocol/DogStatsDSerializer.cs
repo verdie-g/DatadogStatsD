@@ -248,6 +248,7 @@ namespace DatadogStatsD.Protocol
 
         public static byte[] ValidateAndSerializeSampleRate(double sampleRate)
         {
+            ThrowHelper.ThrowIfNaN(sampleRate);
             if (sampleRate < 0.0 || sampleRate > 1.0)
             {
                 throw new ArgumentOutOfRangeException(nameof(sampleRate), "Sample rate must be included between 0 and 1");

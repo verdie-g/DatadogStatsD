@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DatadogStatsD.Telemetering;
 using DatadogStatsD.Transport;
@@ -19,8 +20,10 @@ namespace DatadogStatsD.Metrics
         /// Samples a new value for current <see cref="Histogram"/> instance.
         /// </summary>
         /// <param name="value">The value.</param>
+        /// <exception cref="ArgumentException"><paramref name="value"/> is NaN.</exception>
         public void Sample(double value)
         {
+            ThrowHelper.ThrowIfNaN(value);
             Submit(value);
         }
     }
