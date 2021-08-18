@@ -1,5 +1,8 @@
 using System;
 using System.Buffers;
+#if NETSTANDARD2_1
+using System.Buffers.Text;
+#endif
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -357,26 +360,14 @@ namespace DatadogStatsD.Protocol
 
         private static void WriteValue(double value, ref DogStatsDStream stream)
         {
-            bool isValueWhole = Math.IEEERemainder(value, 1.0) == 0;
 #if NETSTANDARD2_0
+            bool isValueWhole = Math.IEEERemainder(value, 1.0) == 0;
             string valueStr = isValueWhole
                 ? ((long) value).ToString(CultureInfo.InvariantCulture)
                 : value.ToString("G", CultureInfo.InvariantCulture);
             stream.WriteASCII(valueStr);
 #else
-            Span<char> valueChars = stackalloc char[SerializedValueMaxLength];
-            int valueCharsLength;
-            if (isValueWhole)
-            {
-                ((long)value).TryFormat(valueChars, out valueCharsLength);
-            }
-            else
-            {
-                value.TryFormat(valueChars, out valueCharsLength, "G", CultureInfo.InvariantCulture);
-            }
-
-            valueChars = valueChars.Slice(0, valueCharsLength);
-            stream.WriteASCII(valueChars);
+            stream.Write(value);
 #endif
         }
 
@@ -513,6 +504,26 @@ namespace DatadogStatsD.Protocol
                 Position += 1;
                 return 1;
             }
+
+#if NETSTANDARD2_1
+            public int Write(double value)
+            {
+                bool isValueWhole = Math.IEEERemainder(value, 1.0) == 0;
+                var valueBytes = new Span<byte>(_buffer, Position, SerializedValueMaxLength);
+                int valuesBytesLength;
+                if (isValueWhole)
+                {
+                    Utf8Formatter.TryFormat((long)value, valueBytes, out valuesBytesLength);
+                }
+                else
+                {
+                    Utf8Formatter.TryFormat(value, valueBytes, out valuesBytesLength);
+                }
+
+                Position += valuesBytesLength;
+                return valuesBytesLength;
+            }
+#endif
 
             public int Write(byte[] buffer)
             {
