@@ -1,4 +1,8 @@
 # DatadogStatsD
+
+Datadog now supports [OpenTelemetry](https://docs.datadoghq.com/fr/opentelemetry) which should be preferred over
+a vendor lock-in library like this one.
+
 Full featured [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd) client:
 - [Count](https://docs.datadoghq.com/developers/metrics/types/?tab=count#metric-types),
   [Histogram](https://docs.datadoghq.com/developers/metrics/types/?tab=count#metric-types),
